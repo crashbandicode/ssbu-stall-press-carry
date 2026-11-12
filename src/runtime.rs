@@ -61,12 +61,98 @@ unsafe fn samples(ctx: &InlineCtx) -> (usize, &'static mut [u64]) {
 
 unsafe extern "C" fn on_commit(ctx: &mut InlineCtx) {
     let (session, samples) = samples(ctx);
-    (*CARRY.0.get()).on_commit(session, samples);
+    #[cfg(feature = "diag")]
+    let before = samples.first().copied().unwrap_or(0);
+    let _added = (*CARRY.0.get()).on_commit(session, samples);
+    #[cfg(feature = "diag")]
+    if _added != 0 {
+        diag::push(before, samples.first().copied().unwrap_or(0), _added);
+    }
 }
 
 unsafe extern "C" fn on_decided(ctx: &mut InlineCtx) {
     let (session, samples) = samples(ctx);
     (*CARRY.0.get()).on_decided(session, samples);
+}
+
+/// Eden-only: one line per carry (the first local sample before and after,
+/// the bits added), from a static ring drained by a writer thread with a
+/// static stack. Never in the shipped NRO.
+#[cfg(feature = "diag")]
+mod diag {
+    use super::*;
+    use std::sync::atomic::AtomicU32;
+
+    const EVENTS: usize = 64;
+    /// (tick, before, after, bits); written by the game thread before it publishes `HEAD`.
+    static RING: Owned<[(u64, u64, u64, u32); EVENTS]> = Owned(UnsafeCell::new([(0, 0, 0, 0); EVENTS]));
+    static HEAD: AtomicU32 = AtomicU32::new(0);
+    static TAIL: AtomicU32 = AtomicU32::new(0);
+    static LOST: AtomicU64 = AtomicU64::new(0);
+
+    pub fn push(before: u64, after: u64, bits: u32) {
+        let head = HEAD.load(Ordering::Relaxed);
+        if head.wrapping_sub(TAIL.load(Ordering::Acquire)) as usize >= EVENTS {
+            LOST.fetch_add(1, Ordering::Relaxed);
+            return;
+        }
+        // SAFETY: the single producer owns slot `head` until it publishes `head + 1`.
+        unsafe { (*RING.0.get())[head as usize % EVENTS] = (tick(), before, after, bits) };
+        HEAD.store(head.wrapping_add(1), Ordering::Release);
+    }
+
+    fn drain() {
+        let mut line = Text::<256>::new();
+        loop {
+            let tail = TAIL.load(Ordering::Relaxed);
+            if tail == HEAD.load(Ordering::Acquire) {
+                return;
+            }
+            // SAFETY: published before `HEAD`; not reused until `TAIL` passes it.
+            let (at, before, after, bits) = unsafe { (*RING.0.get())[tail as usize % EVENTS] };
+            TAIL.store(tail.wrapping_add(1), Ordering::Release);
+            line.len = 0;
+            let _ = writeln!(
+                line,
+                "{at} carry n={} bits={bits:#x} before={before:#x} after={after:#x} ring_lost={}",
+                tail.wrapping_add(1),
+                LOST.load(Ordering::Relaxed)
+            );
+            append_log(line.as_bytes());
+        }
+    }
+
+    const STACK: usize = 32 * 1024;
+    #[repr(C, align(4096))]
+    struct ThreadStack(UnsafeCell<[u8; STACK]>);
+    #[repr(C, align(16))]
+    struct ThreadObject(UnsafeCell<[u8; 0x1c0]>);
+    // SAFETY: handed to nn::os once, at startup, and never touched again.
+    unsafe impl Sync for ThreadStack {}
+    unsafe impl Sync for ThreadObject {}
+    static STACK_MEMORY: ThreadStack = ThreadStack(UnsafeCell::new([0; STACK]));
+    static THREAD: ThreadObject = ThreadObject(UnsafeCell::new([0; 0x1c0]));
+
+    extern "C" fn main(_: *mut skyline::libc::c_void) {
+        loop {
+            unsafe { nn::os::SleepThread(nn::TimeSpan { nanoseconds: 500_000_000 }) };
+            drain();
+        }
+    }
+
+    pub fn start() -> bool {
+        unsafe {
+            let thread = THREAD.0.get().cast::<nn::os::ThreadType>();
+            let priority = nn::os::GetThreadPriority(nn::os::GetCurrentThread());
+            if nn::os::CreateThread(thread, main, core::ptr::null_mut(), STACK_MEMORY.0.get().cast::<u8>(), STACK,
+                                    priority) != 0 {
+                return false;
+            }
+            nn::os::SetThreadNamePointer(thread, c"press-carry-diag".as_ptr().cast());
+            nn::os::StartThread(thread);
+        }
+        true
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -212,6 +298,10 @@ pub fn main() {
         0 => "not_installed",
         _ => "partial",
     };
+    #[cfg(feature = "diag")]
+    if hooked == 2 {
+        let _ = write!(report, " diag_log={}", if diag::start() { "on" } else { "not_started" });
+    }
     let _ = write!(report, " result={result} heap_allocations={}", HEAP_ALLOCATIONS.load(Ordering::Relaxed));
     report_install(&mut report);
 }

@@ -24,8 +24,8 @@ pwsh -File tools/build.ps1 -Kind release     # cargo skyline build --release -> 
 pwsh -File tools/build.ps1 -Kind diag        # the Eden diagnostic build -> dist/diag
 ```
 
-## License
+License: MIT, see [LICENSE](LICENSE).
 
-MIT; see `LICENSE`.
-
-This plugin was written with AI assistance (Claude). Review it before relying on it.
+> **Disclaimer:** this project was developed with the assistance of AI
+> (Claude) under the operator's direction and review. Nothing is claimed
+> beyond the dated tests in `docs/EDEN-RESULTS.md`.
