@@ -23,9 +23,12 @@
 - **Builds:** `90cc614` release `29dfd4ab…`, diag `711db630…` (left stick only). The right stick (C-stick) added on
   the operator's "no add it to 0.2.0" (via the primary 20:03Z), version unchanged: release `1bbc2d7b…`, diag
   `b303fede…`, 33 host tests. `tools/delivery.py` judges one-frame inputs from the probe's records.
-- **Next:**
-  - one Eden pair, fix 0.1.0 against 0.2.0, with the detector 0.5.0 and the probe;
-  - staging the card install over 0.1.0 `2b6ff493…`.
+- **Eden:** `proof-dc8ee988-r4` (`29dfd4ab`) and `-r5` (`1bbc2d7b`), integration's Yoga pair; see `docs/EDEN-RESULTS.md`.
+- **Card (the primary, 2026-11-12 ~20:30Z):** `1bbc2d7b…` installed over `2b6ff493…`, `installed_verified`;
+  rollback `ultimate/ssbu-stall-press-carry/backups/pre-1bbc2d7bc15ebfd1.nro`; receipts
+  `smash-training-lobby/artifacts/card-install-stall-press-carry-0.2.0/`.
+- **Pushed:** `main` to Forgejo, no tag (tags and releases wait until the operator has played).
+- **Open, offered to the operator, not started:** carrying the C-stick bit `0x80` with a carried left-stick flick.
 
 ## State (0.1.0)
 
