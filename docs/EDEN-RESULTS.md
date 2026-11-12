@@ -50,7 +50,37 @@ to the probe's record of the same pass by the console's system tick
   C = committed; the probe reads after this plugin).
 - Without the plugin these nine presses would have been lost, as V's `0x802` press was.
 
-**In all runs:**
+## Card readiness: `dbl-k-02420ee` (2026-11-12 12:51–13:09Z)
+
+**Plugins and settings:**
+- **Both consoles:** the exact rc.10 card set (19 NROs from the 2026-11-12 install readback: TrainingRooms
+  `97132e12`, Online Deluxe 0.10.5 `c37ee0ff`, CPU pilot 0.2.4 `abd305e6`, imgui_smash 1.0.2 `f72a6b8d` and the rest),
+  this plugin's release `2b6ff493` (`02420ee`), the probe (measurement only) and the tile cursor.
+- **The pilot** was armed through Online Deluxe's overlay on both consoles.
+- **Instance a at 85% speed.** The GDB stub was on, TLS on, volume 0, and the 1-stock save was used.
+
+**Release reproducibility:** `02420ee` built twice with fresh `CARGO_TARGET_DIR`s gives `2b6ff493…` both times.
+
+**Results:**
+
+| match | frames | `sync_end` (both consoles) | b: presses first in a drop | delivered | lost |
+|---|---|---|---|---|---|
+| m1 | 4,842 | `trigger=normal … desync_seen=0` at the same frame | 28 | 28 | 0 |
+| m2 | 5,707 | `trigger=normal … desync_seen=0` at the same frame | 18 | 18 | 0 |
+
+- **Stalls:** b stalled on 13–14% of its frames and dropped 1,737 samples on stalled passes. Consumed = committed on
+  every frame on both consoles.
+- **Install lines:**
+  - **This plugin:** `commit=branch/near decided=branch/near result=installed heap_allocations=0` on both (chained onto
+    the probe's hooks, which loaded first).
+  - **TrainingRooms:** `seams_skipped=[] seams_shadow_diff=[] seams_missing=[] result=installed heap_allocations=0` on
+    both.
+  - **Online Deluxe:** 0.10.5's overlay loaded (the pilot's `deluxe_overlay=found`, 54 overlay entries per console).
+- **No crash:** no panic, abort, crash or Unmapped line on either console.
+- **Not run:** no Eden run had this plugin without the probe. That case takes the stock path, the one the probe took at
+  these same two instructions (`stock/near`).
+
+## In all runs
 - Console a, which waits rarely, needed no carry.
 - The game consumed exactly the committed records on every frame (0 mismatches).
 - Every session ended with `desync_seen=0` on both consoles at the same frame.
