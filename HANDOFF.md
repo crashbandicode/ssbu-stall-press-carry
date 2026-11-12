@@ -8,6 +8,19 @@
 - **Design and results:** `smash-training-lobby/artifacts/phase23/double-input/DESIGN-input-cadence-probe.md` and
   `smash-training-lobby/artifacts/phase23/LANE-DOUBLE-INPUT-RESEARCH.md`.
 
+## State (2026-11-12 04:05Z)
+
+- **Gates on `a666812`:** 19 tests, clippy, `--no-default-features`, release `2b6ff493…`, diag `dcec9d1a…`.
+- **Eden:**
+  - F ran release `72c1acb2…` (`8302362`);
+  - F2 ran diag `dcec9d1a…` (`a666812`).
+  - Results: `docs/EDEN-RESULTS.md`.
+- **Open before any ship decision:**
+  - the stand-in modes (`foreign=inline`/`far`) and the reverse load order;
+  - a replay A/B;
+  - a Switch run;
+  - the release build's reproducibility (its hash changed across diag-only edits).
+
 ## Checklist (from `docs/CHECKLIST.md`)
 
 M items: all apply. C items:
