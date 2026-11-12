@@ -5,8 +5,18 @@ pass and, while it waits for the other console's input (a pass with no game fram
 once its input buffer is full; a button press that lasts only through such a wait never reaches the game. This plugin
 keeps the presses of a discarded sample and adds them to the next input record the game commits, so the press lands
 one frame later instead of not at all. It changes only this console's own input record before the game packs and sends
-it, so both consoles simulate the same input. Releases, sticks and the input delay are unchanged. It draws nothing, so
-there is no GIF.
+it, so both consoles simulate the same input. Releases, sticks and the input delay are unchanged.
+
+![A Jump tap lost without the plugin (left) and carried with it (right)](docs/media/before-after.gif)
+
+*Eden, 2026-11-12, at quarter speed. The other console runs at 70% speed, so this one often waits for it. Jump is
+tapped for one frame every 0.8 s.*
+- *Left, without the plugin:* tap 9 lands on a pass whose sample is thrown away, and the fighter stays on the ground.
+  In that run, 60 taps gave 52 jumps.
+- *Right, with the plugin* (`02420ee`'s source with its diag log, build `dcec9d1a`): tap 13 lands on such a pass too.
+  It is carried into the next input record, and the fighter jumps. In that run, 60 taps gave 60 jumps.
+
+The single clips are `docs/evidence/before.gif` and `docs/evidence/after.gif`.
 
 - **Install:** `atmosphere/contents/01006A800016E000/romfs/skyline/plugins/libssbu_stall_press_carry.nro`.
 - **Log:** `sd:/ultimate/ssbu-stall-press-carry/events.log`, the install line only.

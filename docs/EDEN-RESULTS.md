@@ -80,6 +80,41 @@ to the probe's record of the same pass by the console's system tick
 - **Not run:** no Eden run had this plugin without the probe. That case takes the stock path, the one the probe took at
   these same two instructions (`stock/near`).
 
+## The before/after GIF: `dbl-gb2-02420ee` and `dbl-ga-02420ee` (2026-11-12 13:21–13:40Z)
+
+**Setup, both boots:**
+- **Pair:** a Quickplay pair on the Yoga, GDB stub on, TLS on, muted, the 1-stock save.
+- **Plugins:** the probe, the desync detector and the tile cursor; no CPU pilot. `dbl-ga-02420ee` adds this plugin's
+  diag build `dcec9d1a` (the source of `02420ee`, plus one log line per carry).
+- **Speed:** instance a at 70%, so b waits on about 30% of its passes.
+- **Inputs:**
+  - the runner taps Jump (X) on b 60 times, 16 ms each, 0.8 s apart by wall clock;
+  - a gets a shield tap every 2 s so it isn't dropped as idle;
+  - b is recorded at 640 px and 30 fps.
+- **Analysis:** `tools/press_clip.py` (host tests in `tools/test_press_clip.py`):
+  - **A tap** is a Jump tap call that reached b's mapping.
+  - **A jump** is a tap the game frame received (the probe's consumed input).
+  - **Placement in the video:** each tap is matched to its tap call through the probe's clock.
+
+| boot | this plugin | taps | jumps | lost | carried (this plugin's carry lines matched to taps) |
+|---|---|---|---|---|---|
+| `dbl-gb2-02420ee` | absent | 60 | 52 | 8 (taps 5, 9, 15, 20, 39, 45, 49, 53) | — |
+| `dbl-ga-02420ee` | diag `dcec9d1a` | 60 | 60 | 0 | 10 (10 of 10 carry lines, each `bits=0x4 before=0x8000 after=0x8004`) |
+
+**An earlier boot, `dbl-gb-02420ee`** (a at 85%, 30 taps, 1280 px), lost none: 29 taps reached the mapping and 29
+jumped. At 14% stalls no tap fell entirely on dropped passes, so the GIF boots used 70%.
+
+**`docs/evidence/before.gif`** (tap 9 of `dbl-gb2-02420ee`):
+- Tap 8 jumps and b lands.
+- Tap 9's only sample is on a dropped pass, and b stays on the ground until tap 10.
+
+**`docs/evidence/after.gif`** (tap 13 of `dbl-ga-02420ee`):
+- Tap 13's sample is dropped as well.
+- This plugin's carry line names it, the next frame receives it, and b jumps.
+
+Both clips are 0.9 s before to 1.4 s after the tap, at quarter speed, 640 px wide. `before-after.gif` puts them side
+by side.
+
 ## In all runs
 - Console a, which waits rarely, needed no carry.
 - The game consumed exactly the committed records on every frame (0 mismatches).
