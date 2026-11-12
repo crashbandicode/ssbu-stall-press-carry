@@ -114,7 +114,9 @@ unsafe extern "C" fn on_commit(ctx: &mut InlineCtx) {
                 _ => 0,
             };
             if flick != 0 {
-                diag::push(before, after, bits, flick, side as u8 + 1);
+                // Bit 2 of the stick code: a left-stick carry that set the C-stick bit.
+                let cstick = if side == model::Side::Left && flick == 1 && _outcome.cstick { 4 } else { 0 };
+                diag::push(before, after, bits, flick, side as u8 + 1 + cstick);
                 bits = 0;
                 pushed = true;
             }
@@ -149,7 +151,7 @@ mod diag {
     static LOST: AtomicU64 = AtomicU64::new(0);
 
     /// `flick`: 0 none, 1 a dropped flick put into this commit, 2 left alone (reversal).
-    /// `stick`: 0 none, 1 left, 2 right.
+    /// `stick`: 0 none, 1 left, 2 right; plus 4 when a carried left-stick flick also set the C-stick bit.
     pub fn push(before: u64, after: u64, bits: u32, flick: u8, stick: u8) {
         let head = HEAD.load(Ordering::Relaxed);
         if head.wrapping_sub(TAIL.load(Ordering::Acquire)) as usize >= EVENTS {
@@ -173,11 +175,12 @@ mod diag {
             TAIL.store(tail.wrapping_add(1), Ordering::Release);
             line.len = 0;
             let flick = ["none", "carried", "reversal"][usize::from(flick.min(2))];
-            let stick = ["none", "left", "right"][usize::from(stick.min(2))];
+            let cstick = if stick & 4 != 0 { "yes" } else { "no" };
+            let stick = ["none", "left", "right"][usize::from((stick & 3).min(2))];
             let _ = writeln!(
                 line,
-                "{at} carry n={} bits={bits:#x} flick={flick} stick={stick} before={before:#x} after={after:#x} \
-                 ring_lost={}",
+                "{at} carry n={} bits={bits:#x} flick={flick} stick={stick} cstick={cstick} before={before:#x} \
+                 after={after:#x} ring_lost={}",
                 tail.wrapping_add(1),
                 LOST.load(Ordering::Relaxed)
             );

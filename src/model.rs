@@ -71,6 +71,10 @@ pub const SAMPLES: usize = 0x49508;
 pub const MAX_SAMPLES: usize = 8;
 /// The game's own "no input" test (`.1590a60`): bits 7 and 15 are not presses.
 pub const PRESS_MASK: u32 = 0xffff_7f7f;
+/// Bit 7: the C-stick is in use. The game maps a C-stick input into the attack bits plus the left stick's direction
+/// and sets this bit (Eden, `proof-dc8ee988-r5`). Not a press: it rides along only with a carried left-stick flick
+/// whose dropped sample had it.
+pub const CSTICK_ON: u32 = 0x80;
 /// The system tick runs at 19.2 MHz. Within a match the post-tick runs every pass, stalled or not, so passes more
 /// than 2 s apart belong to different sessions (the same bound as `ssbu-input-cadence-probe`).
 pub const TICKS_PER_SECOND: u64 = 19_200_000;
@@ -342,6 +346,8 @@ pub struct CommitOutcome {
     pub added: u32,
     /// Per stick (`Side as usize`): the slot-0-first dropped flick this commit judged, and how.
     pub flick: [Option<(Stick, FlickRule)>; 2],
+    /// A carried left-stick flick came from a C-stick sample, so `CSTICK_ON` was set with it.
+    pub cstick: bool,
 }
 
 /// The carry's state. Game thread only (both hooks run in the lockstep's post-tick).
@@ -357,6 +363,8 @@ pub struct Carry {
     pending: [u32; MAX_SAMPLES],
     /// Per stick, the strongest flick seen only in dropped samples since that commit.
     flick: [[Option<Stick>; 2]; MAX_SAMPLES],
+    /// Whether the dropped sample that supplied the pending left-stick flick had `CSTICK_ON`.
+    flick_cstick: [bool; MAX_SAMPLES],
     pub stats: Stats,
 }
 
@@ -370,6 +378,7 @@ impl Carry {
             last_stick: [[Stick { x: 0, y: 0 }; 2]; MAX_SAMPLES],
             pending: [0; MAX_SAMPLES],
             flick: [[None; 2]; MAX_SAMPLES],
+            flick_cstick: [false; MAX_SAMPLES],
             stats: Stats {
                 sessions: 0,
                 decisions: 0,
@@ -425,10 +434,16 @@ impl Carry {
             for side in Side::BOTH {
                 let s = side as usize;
                 if let Some(dropped) = self.flick[i][s].take() {
+                    let from_cstick = side == Side::Left && core::mem::take(&mut self.flick_cstick[i]);
                     let rule = flick_rule(dropped, self.last_stick[i][s], Stick::at(*sample, side));
                     match rule {
                         FlickRule::Carry => {
                             *sample = dropped.put_at(*sample, side);
+                            if from_cstick {
+                                // The C-stick input as the dropped sample had it, for this one frame.
+                                *sample |= u64::from(CSTICK_ON);
+                                outcome.cstick = true;
+                            }
                             self.stats.flick_carried += 1;
                         }
                         FlickRule::Reversal => self.stats.flick_lost_reversal += 1,
@@ -464,18 +479,20 @@ impl Carry {
                 if !is_flick(stick, self.last_stick[i][s]) {
                     continue;
                 }
-                match self.flick[i][s] {
-                    None => self.flick[i][s] = Some(stick),
-                    Some(held) if held.bin() == stick.bin() => {
-                        if stick.magnitude() > held.magnitude() {
-                            self.flick[i][s] = Some(stick);
-                        }
-                    }
+                let take = match self.flick[i][s] {
+                    None => true,
+                    Some(held) if held.bin() == stick.bin() => stick.magnitude() > held.magnitude(),
                     Some(_) => {
                         // A second flick in another direction before any commit: the
                         // later one is the one the player ended on.
-                        self.flick[i][s] = Some(stick);
                         self.stats.flick_lost_superseded += 1;
+                        true
+                    }
+                };
+                if take {
+                    self.flick[i][s] = Some(stick);
+                    if side == Side::Left {
+                        self.flick_cstick[i] = (*sample as u32) & CSTICK_ON != 0;
                     }
                 }
             }
@@ -648,6 +665,63 @@ mod tests {
         pass(&mut c, false, stick(120, 0) | cstick(-120, 0));
         assert_eq!(pass(&mut c, true, stick(110, 0)), Some(stick(110, 0) | cstick(-120, 0)));
         assert_eq!(c.stats.flick_carried, 3);
+    }
+
+    /// The bits seen on C-stick samples in Eden (`proof-dc8ee988-r5`): bit 15, AttackRaw, the C-stick bit, Smash,
+    /// Jump and Attack, with the direction on the left stick.
+    const CSTICK_SAMPLE: u64 = 0x82a5;
+
+    #[test]
+    fn a_dropped_c_stick_sample_is_carried_with_its_c_stick_bit() {
+        let mut c = Carry::new();
+        pass(&mut c, true, 0x8000);
+        assert_eq!(pass(&mut c, false, CSTICK_SAMPLE | stick(-120, 0)), None);
+        // Attack, Smash, AttackRaw (and Jump) carry as press edges; the C-stick bit rides along with the flick.
+        assert_eq!(pass(&mut c, true, 0x8000), Some(CSTICK_SAMPLE | stick(-120, 0)));
+        // For that one frame only.
+        assert_eq!(pass(&mut c, true, 0x8000), Some(0x8000));
+        assert_eq!((c.stats.flick_carried, c.stats.attack, c.stats.rescued_bits), (1, 1, 4));
+        let mut s = [0x8000u64];
+        let mut d = Carry::new();
+        pass(&mut d, true, 0x8000);
+        pass(&mut d, false, CSTICK_SAMPLE | stick(0, 120));
+        let tick = d.last_tick + TICKS_PER_SECOND / 60;
+        assert!(d.on_commit(0x1000, tick, &mut s).cstick);
+    }
+
+    #[test]
+    fn a_plain_left_stick_flick_is_carried_without_the_c_stick_bit() {
+        let mut c = Carry::new();
+        pass(&mut c, true, 0x8000);
+        pass(&mut c, false, 0x8000 | stick(120, 0));
+        assert_eq!(pass(&mut c, true, 0x8000), Some(0x8000 | stick(120, 0)));
+        // A C-stick bit on the dropped pass with no flick there is not carried either.
+        pass(&mut c, true, 0x8000);
+        pass(&mut c, false, 0x8080);
+        assert_eq!(pass(&mut c, true, 0x8000), Some(0x8000));
+    }
+
+    #[test]
+    fn a_c_stick_sample_still_there_at_the_commit_needs_nothing() {
+        let mut c = Carry::new();
+        pass(&mut c, true, 0x8000);
+        pass(&mut c, false, 0x82a1 | stick(-120, 0));
+        assert_eq!(pass(&mut c, true, 0x82a1 | stick(-110, 0)), Some(0x82a1 | stick(-110, 0)));
+        assert_eq!((c.stats.flick_carried, c.stats.rescued), (0, 0));
+    }
+
+    #[test]
+    fn a_c_stick_reversal_on_the_left_stick_is_left_alone() {
+        let mut c = Carry::new();
+        pass(&mut c, true, 0x8000);
+        pass(&mut c, false, 0x82a1 | stick(-120, 0));
+        // The next sample points right: the stick and the C-stick bit stay as the game has them; the presses carry.
+        assert_eq!(pass(&mut c, true, 0x8000 | stick(120, 0)), Some(0x8221 | stick(120, 0)));
+        assert_eq!((c.stats.flick_carried, c.stats.flick_lost_reversal), (0, 1));
+        // A later plain flick is not marked from the earlier C-stick sample.
+        pass(&mut c, true, 0x8000);
+        pass(&mut c, false, 0x8000 | stick(0, -120));
+        assert_eq!(pass(&mut c, true, 0x8000), Some(0x8000 | stick(0, -120)));
     }
 
     #[test]

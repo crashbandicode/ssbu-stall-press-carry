@@ -30,9 +30,11 @@ The single clips are `docs/evidence/before.gif` and `docs/evidence/after.gif`.
 
 A sample the game throws away can hold a stick flick that is gone again by the next frame: a dash, a smash attack, a
 fast fall, or a C-stick smash or aerial. In Eden with the default controls the game maps the C-stick into the attack
-bits plus the left stick's direction, so a C-stick input is carried by the button carry and the left-stick rule; only
-its "C-stick in use" bit (`0x80`, which the game's own no-input test ignores) is not. A sample that does carry
-right-stick bytes gets the same rule on the right stick. Each stick is judged on its own, so one wait can carry both. The stick bytes are a float times 120. The plugin uses its own
+bits plus the left stick's direction and sets its "C-stick in use" bit (`0x80`), so a C-stick input is carried by the
+button carry and the left-stick rule. When a carried left-stick flick came from such a sample, `0x80` is set in that
+commit too, for that one frame; it is never carried on its own (the game's no-input test does not count it as a
+press). A sample that does carry right-stick bytes gets the same rule on the right stick. Each stick is judged on its
+own, so one wait can carry both. The stick bytes are a float times 120. The plugin uses its own
 thresholds, not the game's parameters: a dead zone of 24 (0.2) and a flick strength of 84 (0.7). A stick's bin is the
 sign of each axis beyond the dead zone.
 - **A dropped sample's stick is a flick** when it leaves the last committed bin for another non-neutral bin, or reaches
@@ -45,7 +47,7 @@ sign of each axis beyond the dead zone.
   - **Lost (superseded):** two flicks in different directions in one wait keep the later one.
 - **Buttons** are carried as in 0.1.0.
 - **Counters:** both sticks count into the same `flick_carried` and `flick_lost` fields. The diag build's carry line
-  names the stick (`stick=left|right`).
+  names the stick (`stick=left|right`) and whether the C-stick bit came along (`cstick=yes|no`).
 
 **Why both consoles stay in sync:** the plugin writes only this console's own local samples, in the commit path, before
 the game packs them into the input record it both sends and consumes. The other console receives that record and

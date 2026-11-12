@@ -112,6 +112,8 @@ class Delivery(unittest.TestCase):
         self.assertFalse(dv.shows(with_stick(0, 83, 0), 'stick_right'))
         self.assertTrue(dv.shows(with_stick(0, -90, 0, True), 'cstick_left'))
         self.assertFalse(dv.shows(with_stick(0, -90, 0, True), 'stick_left'))
+        self.assertTrue(dv.shows(0x82a1, 'cstick_on'))
+        self.assertFalse(dv.shows(0x8021, 'cstick_on'))
         self.assertFalse(dv.shows(None, 'jump'))
 
 

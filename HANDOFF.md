@@ -28,7 +28,9 @@
   rollback `ultimate/ssbu-stall-press-carry/backups/pre-1bbc2d7bc15ebfd1.nro`; receipts
   `smash-training-lobby/artifacts/card-install-stall-press-carry-0.2.0/`.
 - **Pushed:** `main` to Forgejo, no tag (tags and releases wait until the operator has played).
-- **Open, offered to the operator, not started:** carrying the C-stick bit `0x80` with a carried left-stick flick.
+- **The C-stick bit** (the operator, via the primary 20:40Z: "yes add the 0x80 bit to 0.2.0"): `0x80` rides along with
+  a carried left-stick flick from a C-stick sample. Release `749ed165…`, diag `89980fba…`, 37 host tests. Goes on the
+  card after integration's r6 m2; pushed once the card has it.
 
 ## State (0.1.0)
 

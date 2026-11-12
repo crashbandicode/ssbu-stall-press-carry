@@ -5,7 +5,8 @@
     [--out report.json]
 
 Reads one console's ssbu-input-cadence-probe records (64-byte, `passes-NN.bin`). A stimulus run is a run of decided
-passes whose local sample shows the input: the Jump bit (0x4), the Attack bit (0x1), or a stick (the left stick, or the
+passes whose local sample shows the input: the Jump bit (0x4), the Attack bit (0x1), the C-stick-in-use bit (0x80,
+`cstick_on`), or a stick (the left stick, or the
 right stick: `cstick_*`) at flick strength (84 of 120) to the left, the right, up or down. Each run is judged by the input the game frame consumed for the first
 commit at or after the run's first pass (the probe's consumed cell, matched to committed frames as `press_clip.py`
 does):
@@ -25,8 +26,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import press_clip as pc  # noqa: E402
 
 FLICK = 84
-STIMULI = ('jump', 'attack', 'stick_left', 'stick_right', 'stick_up', 'stick_down',
+STIMULI = ('jump', 'attack', 'cstick_on', 'stick_left', 'stick_right', 'stick_up', 'stick_down',
            'cstick_left', 'cstick_right', 'cstick_up', 'cstick_down')
+# The game's C-stick-in-use bit: with the default controls a C-stick input is Attack/Smash/AttackRaw, this bit and
+# the left stick's direction.
+BITS = {'jump': 0x4, 'attack': 0x1, 'cstick_on': 0x80}
 
 
 def stick(value, right=False):
@@ -40,8 +44,8 @@ def stick(value, right=False):
 def shows(value, kind):
     if value is None:
         return False
-    if kind in ('jump', 'attack'):
-        return bool(value & {'jump': 0x4, 'attack': 0x1}[kind])
+    if kind in BITS:
+        return bool(value & BITS[kind])
     side, direction = kind.split('_')
     x, y = stick(value, side == 'cstick')
     return {'left': x <= -FLICK, 'right': x >= FLICK, 'up': y >= FLICK, 'down': y <= -FLICK}[direction]
