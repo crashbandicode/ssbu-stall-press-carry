@@ -159,6 +159,19 @@ match ended at frame 2828.
   AttackRaw and `0x80` plus the left stick's direction.
 - **The match:** `sync_end trigger=normal … desync_seen=0` on both.
 
+## 0.2.0 with the C-stick bit: `proof-dc8ee988-r7` (2026-11-12 21:25–21:34Z)
+
+The same pair with this plugin's release `749ed165` (`1d8d601`), the build on the card. r6 (same build) ended after 9
+of 216 inputs; r7 ran 104 (40 C-stick flicks, 16 diagonals, 12 each of Jump, dash, smash and fast-fall) before the match
+ended at frame 3000.
+- **Reached b's samples, and the game:** Jump 23/23, A 59/59, C-stick bit (`0x80`) 46/46, left stick left 26/26,
+  right 26/26, up 10/10, down 28/28 (`runs/proof-dc8ee988-r7/delivery-b.json`).
+- **This plugin's counters:** `rescued=12 (jump=2 attack=10) dropped=1277 committed=139 flick_carried=15
+  flick_lost=0`.
+- **The probe:** 65 press bits first seen in a dropped sample, 65 at the next commit, **0 lost**. By bit
+  (`lostbits-b.txt`): `0x80` present at the next commit 18 times, lost 0; r5 (`1bbc2d7b`, no C-stick bit): 8 and 3.
+- **The match:** `sync_end trigger=normal … desync_seen=0` on both; the right-stick bytes 0 on all 4284 decided passes.
+
 In the earlier attempt `proof-dc8ee988-r2`, the flicks were sent as a 16 ms stick lease followed at once by a neutral
 call, and none reached the samples. The idle console a was removed by the game's own penalty evaluator
 (`fault code=1`).
