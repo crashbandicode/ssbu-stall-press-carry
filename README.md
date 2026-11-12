@@ -1,4 +1,4 @@
-# ssbu-stall-press-carry (prototype)
+# ssbu-stall-press-carry
 
 A Skyline plugin for Super Smash Bros. Ultimate 13.0.5. In online matches the game samples local input once per game
 pass and, while it waits for the other console's input (a pass with no game frame), throws that pass's sample away
