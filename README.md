@@ -4,8 +4,9 @@ A Skyline plugin for Super Smash Bros. Ultimate 13.0.5. In online matches the ga
 pass and, while it waits for the other console's input (a pass with no game frame), throws that pass's sample away
 once its input buffer is full; a button press that lasts only through such a wait never reaches the game. This plugin
 keeps the presses of a discarded sample and adds them to the next input record the game commits, so the press lands
-one frame later instead of not at all. It changes only this console's own input record before the game packs and sends
-it, so both consoles simulate the same input. Releases, sticks and the input delay are unchanged.
+one frame later instead of not at all. Since 0.2.0 it does the same for a left-stick flick (see below). It changes only
+this console's own input record before the game packs and sends it, so both consoles simulate the same input. Releases
+and the input delay are unchanged.
 
 ![A Jump tap lost without the plugin (left) and carried with it (right)](docs/media/before-after.gif)
 
@@ -22,7 +23,43 @@ The single clips are `docs/evidence/before.gif` and `docs/evidence/after.gif`.
 - **Log:** `sd:/ultimate/ssbu-stall-press-carry/events.log`, the install line only.
 - **Hook sites** (13.0.5 `.text`, 64-byte guards, inline): `0x16d81dc` (the lockstep's commit path, before the record
   is packed) and `0x16d8714` (after the commit or the drop). Both or neither are installed.
-- **Not covered:** a stick flick shorter than a wait; releasing and pressing again a held button within one wait.
+- **Not covered:** the right stick; a flick that becomes a different direction by the next frame (a dash-dance
+  reversal, left alone); releasing and pressing again a held button within one wait.
+
+## Stick flicks (0.2.0)
+
+A sample the game throws away can hold a left-stick flick (a dash, a smash attack, a fast fall) that is gone again by
+the next frame. The stick bytes are a float times 120. The plugin uses its own thresholds, not the game's parameters:
+a dead zone of 24 (0.2) and a flick strength of 84 (0.7). The stick's bin is the sign of each axis beyond the dead zone.
+- **A dropped sample's stick is a flick** when it leaves the last committed bin for another non-neutral bin, or reaches
+  flick strength in the same bin from below it. Going back to neutral is a release.
+- **At the next commit:**
+  - **Carried:** if the stick has gone back (dead zone, the last committed bin, or weaker in the flick's bin), the
+    dropped position is put into that one commit's left-stick bytes.
+  - **Left alone:** if the stick still shows the flick, it arrives anyway.
+  - **Lost (reversal):** if the stick now points in a new direction (a dash-dance reversal), the new direction wins.
+  - **Lost (superseded):** two flicks in different directions in one wait keep the later one.
+- **Buttons** are carried as in 0.1.0. The right stick is never touched.
+
+**Why both consoles stay in sync:** the plugin writes only this console's own local samples, in the commit path, before
+the game packs them into the input record it both sends and consumes. The other console receives that record and
+simulates the same frame from it. No simulated state is written and no random number is drawn.
+
+## Counters (0.2.0)
+
+Per lockstep session (reset when a new session starts), mirrored into atomics by the two hooks:
+- the decisions, commits and dropped samples (each drop is a stalled pass at the steady lead);
+- the press edges in committed samples;
+- the commits that received carried presses, with the press bits and the groups: jump, attack, special, shield, grab
+  and other;
+- `flick_carried`, and `flick_lost` by reason (`reversal`, `superseded`).
+
+**The export:** `ssbu_stall_press_carry_stats_v1(out: *mut StatsV1) -> bool`, an `extern "C"` function looked up with
+`nn::ro::LookupSymbol`.
+- `StatsV1` is 18 `u32` fields, `size` (72) and `version` (1) first. The order is in `src/model.rs`.
+- It returns false only for a null `out`. Lock-free, any thread.
+- The desync detector 0.5.0 appends these counters to its session-end summary.
+- The release build adds no log line; its install line says `stats=v1`.
 
 ## Build
 

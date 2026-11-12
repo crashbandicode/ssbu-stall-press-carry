@@ -5,15 +5,17 @@
 //! state has one user. The commit hook writes only this console's own local
 //! samples (`session+0x49508`) before the game packs them into the input
 //! record it sends and consumes; nothing else in the game is written. No heap,
-//! no locks, no thread.
+//! no locks, no thread. The per-session counters are mirrored into relaxed
+//! atomics that the export `ssbu_stall_press_carry_stats_v1` reads from any
+//! thread.
 use crate::chain::{self, hook::Outcome, Entry};
-use crate::model::{self, Carry, Site, MAX_SAMPLES, SAMPLES};
+use crate::model::{self, Carry, Site, Stats, StatsV1, MAX_SAMPLES, SAMPLES, STATS_FIELDS};
 use core::cell::UnsafeCell;
 use core::fmt::Write as _;
 use skyline::hooks::{getRegionAddress, InlineCtx, Region};
 use skyline::nn;
 use std::alloc::{GlobalAlloc, Layout, System};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
 const OPEN_WRITE_APPEND: i32 = 2 | 4;
 
@@ -59,20 +61,64 @@ unsafe fn samples(ctx: &InlineCtx) -> (usize, &'static mut [u64]) {
     (session, core::slice::from_raw_parts_mut((session + SAMPLES) as *mut u64, n))
 }
 
+/// The current session's counters, in `StatsV1` field order (`Stats::fields`).
+static STATS: [AtomicU32; STATS_FIELDS] = [
+    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
+    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
+    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
+    AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0), AtomicU32::new(0),
+];
+
+fn publish(stats: &Stats) {
+    for (slot, value) in STATS.iter().zip(stats.fields()) {
+        slot.store(value, Ordering::Relaxed);
+    }
+}
+
+/// `extern "C" fn(out: *mut StatsV1) -> bool`: fills `*out` with the current
+/// session's counters (`size` = 72, `version` = 1) and returns true; false if
+/// `out` is null. Lock-free, any thread; the fields are read one by one.
+///
+/// # Safety
+/// `out` is null or points to writable memory for one `StatsV1`.
+#[no_mangle]
+pub unsafe extern "C" fn ssbu_stall_press_carry_stats_v1(out: *mut StatsV1) -> bool {
+    if out.is_null() {
+        return false;
+    }
+    let mut fields = [0u32; STATS_FIELDS];
+    for (value, slot) in fields.iter_mut().zip(STATS.iter()) {
+        *value = slot.load(Ordering::Relaxed);
+    }
+    out.write_unaligned(StatsV1::from_fields(fields));
+    true
+}
+
 unsafe extern "C" fn on_commit(ctx: &mut InlineCtx) {
     let (session, samples) = samples(ctx);
     #[cfg(feature = "diag")]
     let before = samples.first().copied().unwrap_or(0);
-    let _added = (*CARRY.0.get()).on_commit(session, samples);
+    let carry = &mut *CARRY.0.get();
+    let _outcome = carry.on_commit(session, samples);
+    publish(&carry.stats);
     #[cfg(feature = "diag")]
-    if _added != 0 {
-        diag::push(before, samples.first().copied().unwrap_or(0), _added);
+    {
+        let flick = match _outcome.flick {
+            Some((_, model::FlickRule::Carry)) => 1,
+            Some((_, model::FlickRule::Reversal)) => 2,
+            _ => 0,
+        };
+        if _outcome.added != 0 || flick != 0 {
+            diag::push(before, samples.first().copied().unwrap_or(0), _outcome.added, flick);
+        }
     }
 }
 
 unsafe extern "C" fn on_decided(ctx: &mut InlineCtx) {
     let (session, samples) = samples(ctx);
-    (*CARRY.0.get()).on_decided(session, samples);
+    let carry = &mut *CARRY.0.get();
+    carry.on_decided(session, samples);
+    publish(&carry.stats);
 }
 
 /// Eden-only: one line per carry (the first local sample before and after,
@@ -84,20 +130,22 @@ mod diag {
     use std::sync::atomic::AtomicU32;
 
     const EVENTS: usize = 64;
-    /// (tick, before, after, bits); written by the game thread before it publishes `HEAD`.
-    static RING: Owned<[(u64, u64, u64, u32); EVENTS]> = Owned(UnsafeCell::new([(0, 0, 0, 0); EVENTS]));
+    /// (tick, before, after, bits, flick); written by the game thread before it publishes `HEAD`.
+    type Event = (u64, u64, u64, u32, u8);
+    static RING: Owned<[Event; EVENTS]> = Owned(UnsafeCell::new([(0, 0, 0, 0, 0); EVENTS]));
     static HEAD: AtomicU32 = AtomicU32::new(0);
     static TAIL: AtomicU32 = AtomicU32::new(0);
     static LOST: AtomicU64 = AtomicU64::new(0);
 
-    pub fn push(before: u64, after: u64, bits: u32) {
+    /// `flick`: 0 none, 1 a dropped flick put into this commit, 2 left alone (reversal).
+    pub fn push(before: u64, after: u64, bits: u32, flick: u8) {
         let head = HEAD.load(Ordering::Relaxed);
         if head.wrapping_sub(TAIL.load(Ordering::Acquire)) as usize >= EVENTS {
             LOST.fetch_add(1, Ordering::Relaxed);
             return;
         }
         // SAFETY: the single producer owns slot `head` until it publishes `head + 1`.
-        unsafe { (*RING.0.get())[head as usize % EVENTS] = (tick(), before, after, bits) };
+        unsafe { (*RING.0.get())[head as usize % EVENTS] = (tick(), before, after, bits, flick) };
         HEAD.store(head.wrapping_add(1), Ordering::Release);
     }
 
@@ -109,12 +157,13 @@ mod diag {
                 return;
             }
             // SAFETY: published before `HEAD`; not reused until `TAIL` passes it.
-            let (at, before, after, bits) = unsafe { (*RING.0.get())[tail as usize % EVENTS] };
+            let (at, before, after, bits, flick) = unsafe { (*RING.0.get())[tail as usize % EVENTS] };
             TAIL.store(tail.wrapping_add(1), Ordering::Release);
             line.len = 0;
+            let flick = ["none", "carried", "reversal"][usize::from(flick.min(2))];
             let _ = writeln!(
                 line,
-                "{at} carry n={} bits={bits:#x} before={before:#x} after={after:#x} ring_lost={}",
+                "{at} carry n={} bits={bits:#x} flick={flick} before={before:#x} after={after:#x} ring_lost={}",
                 tail.wrapping_add(1),
                 LOST.load(Ordering::Relaxed)
             );
@@ -301,6 +350,9 @@ pub fn main() {
     #[cfg(feature = "diag")]
     if hooked == 2 {
         let _ = write!(report, " diag_log={}", if diag::start() { "on" } else { "not_started" });
+    }
+    if hooked == 2 {
+        let _ = write!(report, " stats=v1");
     }
     let _ = write!(report, " result={result} heap_allocations={}", HEAP_ALLOCATIONS.load(Ordering::Relaxed));
     report_install(&mut report);

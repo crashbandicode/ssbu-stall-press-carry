@@ -1,9 +1,9 @@
 [package]
 name = "ssbu-stall-press-carry"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 publish = false
-description = "Skyline plugin for Super Smash Bros. Ultimate 13.0.5: a button press made while an online match waits for the other console is carried into the next input record instead of being dropped"
+description = "Skyline plugin for Super Smash Bros. Ultimate 13.0.5: a button press or stick flick made while an online match waits for the other console is carried into the next input record instead of being dropped"
 license = "MIT"
 
 [package.metadata.skyline]
