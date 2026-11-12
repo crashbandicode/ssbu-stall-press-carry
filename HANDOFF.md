@@ -13,7 +13,19 @@
   - `smash-training-lobby/artifacts/phase23/LANE-DOUBLE-INPUT-RESEARCH.md`;
   - `docs/EDEN-RESULTS.md`.
 
-## State
+## 0.2.0 (2026-11-12, current)
+
+- **Order:** the primary, 17:01Z, relaying the operator: counters, a stats export for the desync detector's
+  end-of-session summary, and a flick carry. No tag. The primary installs it on the card.
+- **Commits:** `51c5145` (flick carry, counters, export) and `90cc614` (a pass more than 2 s after the last one
+  starts a new session). Local; `main` will be pushed after the Eden proof.
+- **Design and trace:** `smash-training-lobby/artifacts/phase23/double-input/DESIGN-stall-press-carry-0.2.0.md`.
+- **Builds:** release `29dfd4ab…`, diag `711db630…`. 29 host tests.
+- **Next:**
+  - one Eden pair, fix 0.1.0 against 0.2.0, with the detector 0.5.0 and the probe;
+  - staging the card install over 0.1.0 `2b6ff493…`.
+
+## State (0.1.0)
 
 - **Earlier Eden arms** (2026-11-12 03:00–04:00Z):
   - F ran release `72c1acb2…` (`8302362`);
