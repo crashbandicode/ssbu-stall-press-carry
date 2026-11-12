@@ -69,6 +69,10 @@ pub const SAMPLES: usize = 0x49508;
 pub const MAX_SAMPLES: usize = 8;
 /// The game's own "no input" test (`.1590a60`): bits 7 and 15 are not presses.
 pub const PRESS_MASK: u32 = 0xffff_7f7f;
+/// The system tick runs at 19.2 MHz. Within a match the post-tick runs every pass, stalled or not, so passes more
+/// than 2 s apart belong to different sessions (the same bound as `ssbu-input-cadence-probe`).
+pub const TICKS_PER_SECOND: u64 = 19_200_000;
+pub const SESSION_GAP_TICKS: u64 = 2 * TICKS_PER_SECOND;
 
 /// Mapped button groups for the per-button counters (the game's mapped bits:
 /// Attack 0x1, Special 0x2, Jump 0x4, Guard 0x8, Catch 0x10, Smash 0x20,
@@ -303,6 +307,7 @@ pub struct CommitOutcome {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Carry {
     session: usize,
+    last_tick: u64,
     committed: bool,
     /// Each slot's last committed sample (buttons and left stick), as the game received it.
     last: [u32; MAX_SAMPLES],
@@ -318,6 +323,7 @@ impl Carry {
     pub const fn new() -> Self {
         Self {
             session: 0,
+            last_tick: 0,
             committed: false,
             last: [0; MAX_SAMPLES],
             last_stick: [Stick { x: 0, y: 0 }; MAX_SAMPLES],
@@ -344,19 +350,21 @@ impl Carry {
         }
     }
 
-    /// A new session starts clean, counters included.
-    fn enter(&mut self, session: usize) {
-        if session != self.session {
+    /// A new session starts clean, counters included. The game can put the next match's session at the same address,
+    /// so a pass more than `SESSION_GAP_TICKS` after the last one also starts a new session.
+    fn enter(&mut self, session: usize, tick: u64) {
+        if session != self.session || tick.wrapping_sub(self.last_tick) > SESSION_GAP_TICKS {
             let sessions = self.stats.sessions + 1;
             *self = Self { session, ..Self::new() };
             self.stats.sessions = sessions;
         }
+        self.last_tick = tick;
     }
 
     /// The commit path: ORs the pending presses into the samples about to be
     /// packed and, by `flick_rule`, puts a dropped flick into the left stick.
-    pub fn on_commit(&mut self, session: usize, samples: &mut [u64]) -> CommitOutcome {
-        self.enter(session);
+    pub fn on_commit(&mut self, session: usize, tick: u64, samples: &mut [u64]) -> CommitOutcome {
+        self.enter(session, tick);
         self.committed = true;
         self.stats.decisions += 1;
         self.stats.commits += 1;
@@ -396,8 +404,8 @@ impl Carry {
     }
 
     /// After the decision: a drop when the commit path did not run this pass.
-    pub fn on_decided(&mut self, session: usize, samples: &[u64]) {
-        self.enter(session);
+    pub fn on_decided(&mut self, session: usize, tick: u64, samples: &[u64]) {
+        self.enter(session, tick);
         if core::mem::take(&mut self.committed) {
             return;
         }
@@ -433,11 +441,13 @@ mod tests {
 
     /// One pass: (committed?, the slot-0 sample as mapped). Returns the record the game packs (None on a drop).
     fn pass(c: &mut Carry, commit: bool, sample: u64) -> Option<u64> {
+        // One pass per 60 Hz frame after the last one seen.
+        let tick = c.last_tick + TICKS_PER_SECOND / 60;
         let mut s = [sample];
         if commit {
-            c.on_commit(0x1000, &mut s);
+            c.on_commit(0x1000, tick, &mut s);
         }
-        c.on_decided(0x1000, &s);
+        c.on_decided(0x1000, tick, &s);
         commit.then_some(s[0])
     }
 
@@ -508,9 +518,29 @@ mod tests {
         pass(&mut c, true, 0);
         pass(&mut c, false, 0x10);
         let mut s = [0u64];
-        assert_eq!(c.on_commit(0x2000, &mut s).added, 0);
+        assert_eq!(c.on_commit(0x2000, c.last_tick + 1, &mut s).added, 0);
         assert_eq!(s[0], 0);
         assert_eq!((c.stats.sessions, c.stats.dropped, c.stats.commits), (2, 0, 1));
+    }
+
+    #[test]
+    fn the_next_match_at_the_same_address_starts_clean_after_a_gap() {
+        let mut c = Carry::new();
+        pass(&mut c, true, 0);
+        pass(&mut c, false, 0x4);
+        assert_eq!(c.stats.dropped, 1);
+        // Exactly 2 s without a pass is still the same session.
+        let mut s = [0u64];
+        c.on_commit(0x1000, c.last_tick + SESSION_GAP_TICKS, &mut s);
+        c.on_decided(0x1000, c.last_tick, &s);
+        assert_eq!(s[0], 0x4);
+        assert_eq!((c.stats.sessions, c.stats.rescued), (1, 1));
+        pass(&mut c, false, 0x10);
+        // The results screen and the next match's loading: the same session address, much later.
+        let mut s = [0u64];
+        c.on_commit(0x1000, c.last_tick + 10 * TICKS_PER_SECOND, &mut s);
+        assert_eq!(s[0], 0, "the previous match's press is not carried");
+        assert_eq!((c.stats.sessions, c.stats.dropped, c.stats.rescued, c.stats.commits), (2, 0, 0, 1));
     }
 
     #[test]

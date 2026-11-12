@@ -47,7 +47,9 @@ simulates the same frame from it. No simulated state is written and no random nu
 
 ## Counters (0.2.0)
 
-Per lockstep session (reset when a new session starts), mirrored into atomics by the two hooks:
+Per lockstep session, mirrored into atomics by the two hooks. A session starts when the session address changes or
+when a pass comes more than 2 s after the last one (the next match can reuse the address; within a match the hooks run
+every pass, stalled or not). A new session also drops any carry still pending. The counters:
 - the decisions, commits and dropped samples (each drop is a stalled pass at the steady lead);
 - the press edges in committed samples;
 - the commits that received carried presses, with the press bits and the groups: jump, attack, special, shield, grab

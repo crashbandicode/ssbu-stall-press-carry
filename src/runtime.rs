@@ -99,7 +99,7 @@ unsafe extern "C" fn on_commit(ctx: &mut InlineCtx) {
     #[cfg(feature = "diag")]
     let before = samples.first().copied().unwrap_or(0);
     let carry = &mut *CARRY.0.get();
-    let _outcome = carry.on_commit(session, samples);
+    let _outcome = carry.on_commit(session, tick(), samples);
     publish(&carry.stats);
     #[cfg(feature = "diag")]
     {
@@ -117,7 +117,7 @@ unsafe extern "C" fn on_commit(ctx: &mut InlineCtx) {
 unsafe extern "C" fn on_decided(ctx: &mut InlineCtx) {
     let (session, samples) = samples(ctx);
     let carry = &mut *CARRY.0.get();
-    carry.on_decided(session, samples);
+    carry.on_decided(session, tick(), samples);
     publish(&carry.stats);
 }
 
