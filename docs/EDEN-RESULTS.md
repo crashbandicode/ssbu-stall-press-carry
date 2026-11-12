@@ -115,6 +115,38 @@ jumped. At 14% stalls no tap fell entirely on dropped passes, so the GIF boots u
 Both clips are 0.9 s before to 1.4 s after the tap, at quarter speed, 640 px wide. `before-after.gif` puts them side
 by side.
 
+## 0.2.0 with the desync detector 0.5.0: `proof-dc8ee988-r4` (2026-11-12 19:57–20:07Z)
+
+Integration's Yoga pair (`smash-training-lobby/artifacts/phase23/double-input/runs/proof-dc8ee988-r4/`):
+- **Builds:** the rc.11 card set (22 NROs) with this plugin's release `29dfd4ab` (`90cc614`, left stick only), the
+  desync detector 0.5.0 `dc8ee988`, the probe and the tile cursor, on both consoles.
+- **Setup:** a at 70% speed, played by the CPU pilot.
+- **Inputs on b (m2):** in turn, a Jump tap (X, 16 ms), a dash flick (left stick ±1.0, 33 ms), a smash flick (the same
+  plus an A tap), and a fast-fall (X, then the stick down for 33 ms); 0.8 s apart.
+- **Install line:** `plugin=ssbu-stall-press-carry/0.2.0 commit=branch/near decided=branch/near stats=v1
+  result=installed heap_allocations=0`.
+
+**Counted by `tools/delivery.py`** (`dcc955f`) on b's probe records:
+
+| input | calls | runs in b's samples | reached the game | carried (this plugin's counters) |
+|---|---|---|---|---|
+| Jump | 55 | 54 | 54 | 7 |
+| A | 27 | 26 | 26 | 1 |
+| left stick, sideways | 54 | 54 | 54 | 0 |
+| left stick, down | 27 | 27 | 27 | 0 |
+
+- **The probe's own count:** 21 press bits first seen in a dropped sample; 21 present at the next commit, 0 lost.
+- **The detector's summary on b:** `stall_press rescued=8 (jump=7 attack=1 …) dropped=1729 committed=106 stalled=1729
+  flick_carried=0 flick_lost=0`.
+- **Why no flick carries:** b's stalls were nearly all one pass long (`stall_runs=0,1400,130,9,5,1,0,2`). The two-pass
+  flicks always overlapped a committed pass, so the game got them without help. The flick rule and the right stick
+  (`dcc955f`) are covered by host tests.
+- **The match:** `sync_end trigger=normal … desync_seen=0` on both.
+
+In the earlier attempt `proof-dc8ee988-r2`, the flicks were sent as a 16 ms stick lease followed at once by a neutral
+call, and none reached the samples. The idle console a was removed by the game's own penalty evaluator
+(`fault code=1`).
+
 ## In all runs
 - Console a, which waits rarely, needed no carry.
 - The game consumed exactly the committed records on every frame (0 mismatches).
