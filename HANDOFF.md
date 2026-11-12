@@ -29,8 +29,13 @@
   `smash-training-lobby/artifacts/card-install-stall-press-carry-0.2.0/`.
 - **Pushed:** `main` to Forgejo, no tag (tags and releases wait until the operator has played).
 - **The C-stick bit** (the operator, via the primary 20:40Z: "yes add the 0x80 bit to 0.2.0"): `0x80` rides along with
-  a carried left-stick flick from a C-stick sample. Release `749ed165…`, diag `89980fba…`, 37 host tests. Goes on the
-  card after integration's r6 m2; pushed once the card has it.
+  a carried left-stick flick from a C-stick sample. Release `749ed165…`, diag `89980fba…`, 37 host tests.
+  - Eden r6 (`proof-dc8ee988-r6`): m2 PASS but only 9 of 216 inputs ran; the `0x80` branch had no chance to act.
+  - Card (the primary, ~21:07Z): `1bbc2d7b` → `749ed165`, `installed_verified` then `verified_in_place`; rollback
+    `ultimate/ssbu-stall-press-carry/backups/pre-749ed165c6b941dd.nro`; receipts
+    `smash-training-lobby/artifacts/card-install-stall-press-carry-0.2.0-cs/`.
+  - Pushed: `main` `1d8d601`, no tag.
+  - Next: integration's r7, a full-length m2; `tools/delivery.py` on its `collect`.
 
 ## State (0.1.0)
 
