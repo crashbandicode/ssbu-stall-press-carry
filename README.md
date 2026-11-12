@@ -4,7 +4,7 @@ A Skyline plugin for Super Smash Bros. Ultimate 13.0.5. In online matches the ga
 pass and, while it waits for the other console's input (a pass with no game frame), throws that pass's sample away
 once its input buffer is full; a button press that lasts only through such a wait never reaches the game. This plugin
 keeps the presses of a discarded sample and adds them to the next input record the game commits, so the press lands
-one frame later instead of not at all. Since 0.2.0 it does the same for a left-stick flick (see below). It changes only
+one frame later instead of not at all. Since 0.2.0 it does the same for a flick of either stick (see below). It changes only
 this console's own input record before the game packs and sends it, so both consoles simulate the same input. Releases
 and the input delay are unchanged.
 
@@ -23,23 +23,27 @@ The single clips are `docs/evidence/before.gif` and `docs/evidence/after.gif`.
 - **Log:** `sd:/ultimate/ssbu-stall-press-carry/events.log`, the install line only.
 - **Hook sites** (13.0.5 `.text`, 64-byte guards, inline): `0x16d81dc` (the lockstep's commit path, before the record
   is packed) and `0x16d8714` (after the commit or the drop). Both or neither are installed.
-- **Not covered:** the right stick; a flick that becomes a different direction by the next frame (a dash-dance
-  reversal, left alone); releasing and pressing again a held button within one wait.
+- **Not covered:** a flick that becomes a different direction by the next frame (a dash-dance reversal, left alone);
+  releasing and pressing again a held button within one wait.
 
 ## Stick flicks (0.2.0)
 
-A sample the game throws away can hold a left-stick flick (a dash, a smash attack, a fast fall) that is gone again by
-the next frame. The stick bytes are a float times 120. The plugin uses its own thresholds, not the game's parameters:
-a dead zone of 24 (0.2) and a flick strength of 84 (0.7). The stick's bin is the sign of each axis beyond the dead zone.
+A sample the game throws away can hold a stick flick that is gone again by the next frame: on the left stick a dash, a
+smash attack or a fast fall; on the right stick (the C-stick) a smash attack or an aerial. Each stick is judged on its
+own, with the same rule, so one wait can carry both. The stick bytes are a float times 120. The plugin uses its own
+thresholds, not the game's parameters: a dead zone of 24 (0.2) and a flick strength of 84 (0.7). A stick's bin is the
+sign of each axis beyond the dead zone.
 - **A dropped sample's stick is a flick** when it leaves the last committed bin for another non-neutral bin, or reaches
   flick strength in the same bin from below it. Going back to neutral is a release.
 - **At the next commit:**
   - **Carried:** if the stick has gone back (dead zone, the last committed bin, or weaker in the flick's bin), the
-    dropped position is put into that one commit's left-stick bytes.
+    dropped position is put into that one commit's bytes for that stick.
   - **Left alone:** if the stick still shows the flick, it arrives anyway.
   - **Lost (reversal):** if the stick now points in a new direction (a dash-dance reversal), the new direction wins.
   - **Lost (superseded):** two flicks in different directions in one wait keep the later one.
-- **Buttons** are carried as in 0.1.0. The right stick is never touched.
+- **Buttons** are carried as in 0.1.0.
+- **Counters:** both sticks count into the same `flick_carried` and `flick_lost` fields. The diag build's carry line
+  names the stick (`stick=left|right`).
 
 **Why both consoles stay in sync:** the plugin writes only this console's own local samples, in the commit path, before
 the game packs them into the input record it both sends and consumes. The other console receives that record and

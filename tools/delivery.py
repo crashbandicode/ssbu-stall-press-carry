@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Which one-frame inputs reached the game: Jump and A presses, and left-stick flicks (left, right, down).
+"""Which one-frame inputs reached the game: Jump and A presses, and flicks of either stick (left, right, up, down).
 
 /usr/bin/python3 -I tools/delivery.py --passes passes-00.bin [--passes passes-01.bin ...] [--inputs m2-inputs.json] \
     [--out report.json]
 
 Reads one console's ssbu-input-cadence-probe records (64-byte, `passes-NN.bin`). A stimulus run is a run of decided
-passes whose local sample shows the input: the Jump bit (0x4), the Attack bit (0x1), or the left stick at flick strength
-(84 of 120) to the left, the right or down. Each run is judged by the input the game frame consumed for the first
+passes whose local sample shows the input: the Jump bit (0x4), the Attack bit (0x1), or a stick (the left stick, or the
+right stick: `cstick_*`) at flick strength (84 of 120) to the left, the right, up or down. Each run is judged by the input the game frame consumed for the first
 commit at or after the run's first pass (the probe's consumed cell, matched to committed frames as `press_clip.py`
 does):
 - `delivered`: the consumed input shows the stimulus;
@@ -25,22 +25,26 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import press_clip as pc  # noqa: E402
 
 FLICK = 84
-STIMULI = ('jump', 'attack', 'stick_left', 'stick_right', 'stick_down')
+STIMULI = ('jump', 'attack', 'stick_left', 'stick_right', 'stick_up', 'stick_down',
+           'cstick_left', 'cstick_right', 'cstick_up', 'cstick_down')
 
 
-def stick(value):
-    """The left stick (x, y) of a 64-bit mapped input: bytes 4 and 5 as i8."""
-    x = (value >> 32) & 0xff
-    y = (value >> 40) & 0xff
+def stick(value, right=False):
+    """A stick (x, y) of a 64-bit mapped input as i8: the left stick is bytes 4 and 5, the right stick (C-stick) 6 and 7."""
+    s = 48 if right else 32
+    x = (value >> s) & 0xff
+    y = (value >> (s + 8)) & 0xff
     return (x - 256 if x > 127 else x, y - 256 if y > 127 else y)
 
 
 def shows(value, kind):
     if value is None:
         return False
-    x, y = stick(value)
-    return {'jump': bool(value & 0x4), 'attack': bool(value & 0x1), 'stick_left': x <= -FLICK,
-            'stick_right': x >= FLICK, 'stick_down': y <= -FLICK}[kind]
+    if kind in ('jump', 'attack'):
+        return bool(value & {'jump': 0x4, 'attack': 0x1}[kind])
+    side, direction = kind.split('_')
+    x, y = stick(value, side == 'cstick')
+    return {'left': x <= -FLICK, 'right': x >= FLICK, 'up': y >= FLICK, 'down': y <= -FLICK}[direction]
 
 
 def consumed_full(records):
@@ -72,7 +76,7 @@ def runs(records, kind):
         run['delivered'] = shows(got, kind)
         run['all_dropped'] = all(p.endswith('D') for p in run['passes'])
         run['carried'] = run['all_dropped'] and run['delivered']
-        run['lost_under_0_1_0'] = run['all_dropped'] and kind.startswith('stick')
+        run['lost_under_0_1_0'] = run['all_dropped'] and 'stick' in kind
     return out, {'offset': offset, 'match_rate': rate}
 
 

@@ -20,7 +20,9 @@
 - **Commits:** `51c5145` (flick carry, counters, export) and `90cc614` (a pass more than 2 s after the last one
   starts a new session). Local; `main` will be pushed after the Eden proof.
 - **Design and trace:** `smash-training-lobby/artifacts/phase23/double-input/DESIGN-stall-press-carry-0.2.0.md`.
-- **Builds:** release `29dfd4ab…`, diag `711db630…`. 29 host tests.
+- **Builds:** `90cc614` release `29dfd4ab…`, diag `711db630…` (left stick only). The right stick (C-stick) added on
+  the operator's "no add it to 0.2.0" (via the primary 20:03Z), version unchanged: release `1bbc2d7b…`, diag
+  `b303fede…`, 33 host tests. `tools/delivery.py` judges one-frame inputs from the probe's records.
 - **Next:**
   - one Eden pair, fix 0.1.0 against 0.2.0, with the detector 0.5.0 and the probe;
   - staging the card install over 0.1.0 `2b6ff493…`.

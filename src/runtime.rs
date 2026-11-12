@@ -103,13 +103,24 @@ unsafe extern "C" fn on_commit(ctx: &mut InlineCtx) {
     publish(&carry.stats);
     #[cfg(feature = "diag")]
     {
-        let flick = match _outcome.flick {
-            Some((_, model::FlickRule::Carry)) => 1,
-            Some((_, model::FlickRule::Reversal)) => 2,
-            _ => 0,
-        };
-        if _outcome.added != 0 || flick != 0 {
-            diag::push(before, samples.first().copied().unwrap_or(0), _outcome.added, flick);
+        // One line per stick with a judged flick (the added bits on the first), or one for added bits alone.
+        let after = samples.first().copied().unwrap_or(0);
+        let mut bits = _outcome.added;
+        let mut pushed = false;
+        for side in model::Side::BOTH {
+            let flick = match _outcome.flick[side as usize] {
+                Some((_, model::FlickRule::Carry)) => 1,
+                Some((_, model::FlickRule::Reversal)) => 2,
+                _ => 0,
+            };
+            if flick != 0 {
+                diag::push(before, after, bits, flick, side as u8 + 1);
+                bits = 0;
+                pushed = true;
+            }
+        }
+        if !pushed && bits != 0 {
+            diag::push(before, after, bits, 0, 0);
         }
     }
 }
@@ -130,22 +141,23 @@ mod diag {
     use std::sync::atomic::AtomicU32;
 
     const EVENTS: usize = 64;
-    /// (tick, before, after, bits, flick); written by the game thread before it publishes `HEAD`.
-    type Event = (u64, u64, u64, u32, u8);
-    static RING: Owned<[Event; EVENTS]> = Owned(UnsafeCell::new([(0, 0, 0, 0, 0); EVENTS]));
+    /// (tick, before, after, bits, flick, stick); written by the game thread before it publishes `HEAD`.
+    type Event = (u64, u64, u64, u32, u8, u8);
+    static RING: Owned<[Event; EVENTS]> = Owned(UnsafeCell::new([(0, 0, 0, 0, 0, 0); EVENTS]));
     static HEAD: AtomicU32 = AtomicU32::new(0);
     static TAIL: AtomicU32 = AtomicU32::new(0);
     static LOST: AtomicU64 = AtomicU64::new(0);
 
     /// `flick`: 0 none, 1 a dropped flick put into this commit, 2 left alone (reversal).
-    pub fn push(before: u64, after: u64, bits: u32, flick: u8) {
+    /// `stick`: 0 none, 1 left, 2 right.
+    pub fn push(before: u64, after: u64, bits: u32, flick: u8, stick: u8) {
         let head = HEAD.load(Ordering::Relaxed);
         if head.wrapping_sub(TAIL.load(Ordering::Acquire)) as usize >= EVENTS {
             LOST.fetch_add(1, Ordering::Relaxed);
             return;
         }
         // SAFETY: the single producer owns slot `head` until it publishes `head + 1`.
-        unsafe { (*RING.0.get())[head as usize % EVENTS] = (tick(), before, after, bits, flick) };
+        unsafe { (*RING.0.get())[head as usize % EVENTS] = (tick(), before, after, bits, flick, stick) };
         HEAD.store(head.wrapping_add(1), Ordering::Release);
     }
 
@@ -157,13 +169,15 @@ mod diag {
                 return;
             }
             // SAFETY: published before `HEAD`; not reused until `TAIL` passes it.
-            let (at, before, after, bits, flick) = unsafe { (*RING.0.get())[tail as usize % EVENTS] };
+            let (at, before, after, bits, flick, stick) = unsafe { (*RING.0.get())[tail as usize % EVENTS] };
             TAIL.store(tail.wrapping_add(1), Ordering::Release);
             line.len = 0;
             let flick = ["none", "carried", "reversal"][usize::from(flick.min(2))];
+            let stick = ["none", "left", "right"][usize::from(stick.min(2))];
             let _ = writeln!(
                 line,
-                "{at} carry n={} bits={bits:#x} flick={flick} before={before:#x} after={after:#x} ring_lost={}",
+                "{at} carry n={} bits={bits:#x} flick={flick} stick={stick} before={before:#x} after={after:#x} \
+                 ring_lost={}",
                 tail.wrapping_add(1),
                 LOST.load(Ordering::Relaxed)
             );

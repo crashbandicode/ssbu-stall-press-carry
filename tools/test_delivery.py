@@ -11,8 +11,9 @@ import press_clip as pc  # noqa: E402
 NEUTRAL = 0x8000
 
 
-def with_stick(buttons, x, y):
-    return buttons | (x & 0xff) << 32 | (y & 0xff) << 40
+def with_stick(buttons, x, y, right=False):
+    s = 48 if right else 32
+    return buttons | (x & 0xff) << s | (y & 0xff) << (s + 8)
 
 
 def record(p, flags, send, current, sample, consumed):
@@ -39,13 +40,15 @@ def simulate(inputs, stalls, carry, n=200):
             out = sample
             if carry:
                 out |= pending
-            if carry == '0.2.0' and flick is not None and dv.stick(sample) == (0, 0):
-                out = (out & ~0xffff_0000_0000) | (flick & 0xffff_0000_0000)
+            if carry == '0.2.0' and flick is not None:
+                for mask, right in ((0xffff << 32, False), (0xffff << 48, True)):
+                    if dv.stick(sample, right) == (0, 0) and dv.stick(flick, right) != (0, 0):
+                        out = (out & ~mask) | (flick & mask)
             committed[send] = out
             last, pending, flick, send = sample, 0, None, send + 1
         else:
             pending |= sample & ~last & 0xffff7f7f
-            if dv.stick(sample) != (0, 0):
+            if dv.stick(sample) != (0, 0) or dv.stick(sample, True) != (0, 0):
                 flick = sample
         blob += record(p, flags, s_send, current, sample, committed.get(current, 0))
     return pc.decode(blob)
@@ -55,8 +58,9 @@ INPUTS = {30: NEUTRAL | 0x4,                       # a Jump tap on a committed p
           60: with_stick(NEUTRAL, 120, 0),         # a dash flick on a committed pass
           90: NEUTRAL | 0x4,                       # a Jump tap on a dropped pass
           120: with_stick(NEUTRAL, -120, 0),       # a dash flick on a dropped pass
-          150: with_stick(NEUTRAL, 0, -120)}       # a fast-fall flick on a dropped pass
-STALLS = {90, 120, 150}
+          150: with_stick(NEUTRAL, 0, -120),       # a fast-fall flick on a dropped pass
+          170: with_stick(NEUTRAL, 0, 120, True)}  # a C-stick up flick on a dropped pass
+STALLS = {90, 120, 150, 170}
 
 
 def count(records, kind):
@@ -85,6 +89,12 @@ class Delivery(unittest.TestCase):
         self.assertEqual(count(recs, 'jump')[1], (True, True, True, False))
         self.assertEqual(count(recs, 'stick_left'), [(True, True, True, True)])
         self.assertEqual(count(recs, 'stick_down'), [(True, True, True, True)])
+        self.assertEqual(count(recs, 'cstick_up'), [(True, True, True, True)])
+        self.assertEqual(count(recs, 'stick_up'), [])
+
+    def test_the_c_stick_is_lost_without_0_2_0(self):
+        for carry in (None, '0.1.0'):
+            self.assertEqual(count(simulate(INPUTS, STALLS, carry), 'cstick_up'), [(False, True, False, True)])
 
     def test_the_summary_counts_per_session(self):
         report = dv.summarize(simulate(INPUTS, STALLS, '0.2.0'))
@@ -96,8 +106,12 @@ class Delivery(unittest.TestCase):
 
     def test_stick_bytes_are_signed(self):
         self.assertEqual(dv.stick(with_stick(0, -120, 87)), (-120, 87))
+        self.assertEqual(dv.stick(with_stick(0, -120, 87, True), True), (-120, 87))
+        self.assertEqual(dv.stick(with_stick(0, -120, 87, True)), (0, 0))
         self.assertTrue(dv.shows(with_stick(0, 0, -84), 'stick_down'))
         self.assertFalse(dv.shows(with_stick(0, 83, 0), 'stick_right'))
+        self.assertTrue(dv.shows(with_stick(0, -90, 0, True), 'cstick_left'))
+        self.assertFalse(dv.shows(with_stick(0, -90, 0, True), 'stick_left'))
         self.assertFalse(dv.shows(None, 'jump'))
 
 
