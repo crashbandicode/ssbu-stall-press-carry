@@ -143,6 +143,22 @@ Integration's Yoga pair (`smash-training-lobby/artifacts/phase23/double-input/ru
   (`dcc955f`) are covered by host tests.
 - **The match:** `sync_end trigger=normal … desync_seen=0` on both.
 
+## 0.2.0 with both sticks: `proof-dc8ee988-r5` (2026-11-12 20:17–20:27Z)
+
+The same pair and card set with this plugin's release `1bbc2d7b` (`dcc955f`). b's m2 inputs: 40 C-stick flicks and 16
+diagonals on both sticks, one frame (16 ms) each, then Jump taps and left-stick dash, smash and fast-fall flicks; the
+match ended at frame 2828.
+- **Reached b's samples, and the game:** A 53/53, Jump 9/9, left stick left 18/18, right 20/20, up 14/14, down 18/18
+  (`tools/delivery.py`; `runs/proof-dc8ee988-r5/delivery-b.json`).
+- **This plugin's counters** (the detector's summary on b): `rescued=5 (attack=5) dropped=1220 committed=115
+  flick_carried=11 flick_lost=0`.
+- **The probe:** 40 press bits first seen in a dropped sample, 37 at the next commit; the 3 others are all `0x80`
+  (C-stick in use), which the game's no-input test ignores and this plugin does not carry (`lostbits.py` beside the
+  report).
+- **The right stick's bytes (6–7) were 0 on all 4051 decided passes:** the game maps the C-stick into Attack, Smash,
+  AttackRaw and `0x80` plus the left stick's direction.
+- **The match:** `sync_end trigger=normal … desync_seen=0` on both.
+
 In the earlier attempt `proof-dc8ee988-r2`, the flicks were sent as a 16 ms stick lease followed at once by a neutral
 call, and none reached the samples. The idle console a was removed by the game's own penalty evaluator
 (`fault code=1`).

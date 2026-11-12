@@ -28,9 +28,11 @@ The single clips are `docs/evidence/before.gif` and `docs/evidence/after.gif`.
 
 ## Stick flicks (0.2.0)
 
-A sample the game throws away can hold a stick flick that is gone again by the next frame: on the left stick a dash, a
-smash attack or a fast fall; on the right stick (the C-stick) a smash attack or an aerial. Each stick is judged on its
-own, with the same rule, so one wait can carry both. The stick bytes are a float times 120. The plugin uses its own
+A sample the game throws away can hold a stick flick that is gone again by the next frame: a dash, a smash attack, a
+fast fall, or a C-stick smash or aerial. In Eden with the default controls the game maps the C-stick into the attack
+bits plus the left stick's direction, so a C-stick input is carried by the button carry and the left-stick rule; only
+its "C-stick in use" bit (`0x80`, which the game's own no-input test ignores) is not. A sample that does carry
+right-stick bytes gets the same rule on the right stick. Each stick is judged on its own, so one wait can carry both. The stick bytes are a float times 120. The plugin uses its own
 thresholds, not the game's parameters: a dead zone of 24 (0.2) and a flick strength of 84 (0.7). A stick's bin is the
 sign of each axis beyond the dead zone.
 - **A dropped sample's stick is a flick** when it leaves the last committed bin for another non-neutral bin, or reaches
