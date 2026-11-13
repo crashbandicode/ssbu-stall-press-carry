@@ -17,7 +17,14 @@ tapped for one frame every 0.8 s.*
 - *Right, with the plugin* (`02420ee`'s source with its diag log, build `dcec9d1a`): tap 13 lands on such a pass too.
   It is carried into the next input record, and the fighter jumps. In that run, 60 taps gave 60 jumps.
 
-The single clips are `docs/evidence/before.gif` and `docs/evidence/after.gif`.
+![A C-stick smash lost without the plugin (left) and carried with it (right)](docs/media/cstick-before-after.gif)
+
+*Eden, 2026-11-13, at half speed, with 0.2.0 (diag build `89980fba` of `1d8d601`, the source of the release
+`749ed165`): a one-frame C-stick flick lands only on a sample the game throws away, so without the plugin (left)
+Sephiroth never swings, and with it (right) the flick reaches the next frame and his smash hits.*
+
+The single clips are `docs/evidence/before.gif` and `docs/evidence/after.gif` (Jump), and
+`docs/evidence/cstick-before.gif` and `docs/evidence/cstick-after.gif` (C-stick).
 
 - **Install:** `atmosphere/contents/01006A800016E000/romfs/skyline/plugins/libssbu_stall_press_carry.nro`.
 - **Log:** `sd:/ultimate/ssbu-stall-press-carry/events.log`, the install line only.

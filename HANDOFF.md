@@ -36,6 +36,18 @@
     `smash-training-lobby/artifacts/card-install-stall-press-carry-0.2.0-cs/`.
   - Pushed: `main` `1d8d601`, no tag.
   - Next: integration's r7, a full-length m2; `tools/delivery.py` on its `collect`.
+  - r7 (`proof-dc8ee988-r7`): 0 C-stick bits lost; the primary accepted it. The card is final (the primary,
+    2026-11-13 00:23Z): this plugin `749ed165`, detector 0.5.1 `36027bb7`, TrainingRooms rc.11.
+- **The C-stick GIF** (the primary 2026-11-13 00:23Z; the operator: "gifs updated?"):
+  `docs/media/cstick-before-after.gif`, with the clips `docs/evidence/cstick-before.gif` and `cstick-after.gif`.
+  - Runs on the Yoga, stage `~/eden-runs/inputs-gif020/`: `gif020-before-1` (this plugin not loaded) and
+    `gif020-after-4` (diag `89980fba`, one line per carry; `-2` also ran, `-1` and `-3` didn't reach a match); see
+    `docs/EDEN-RESULTS.md`.
+  - After clip: diag, not the release, because only the diag build's carry lines tie a carry to its frame (as 0.1.0's
+    after clip did). 23 of 23 carries in `gif020-after-4` matched and delivered; 0 C-stick flicks lost with the plugin
+    (112 of 112 reached the game), 2 of 36 without it.
+  - Made with `tools/flick_clip.py`.
+  - Pushed to `main`, no tag.
 
 ## State (0.1.0)
 

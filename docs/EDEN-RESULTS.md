@@ -176,6 +176,115 @@ In the earlier attempt `proof-dc8ee988-r2`, the flicks were sent as a 16 ms stic
 call, and none reached the samples. The idle console a was removed by the game's own penalty evaluator
 (`fault code=1`).
 
+## The C-stick before/after GIF: `gif020-before-1` and `gif020-after-4` (2026-11-13 00:33–01:37Z)
+
+The primary's order of 00:23Z (the operator: "gifs updated?"): a C-stick flick that the game drops, lost without this
+plugin and carried with it, made the way the 0.1.0 GIF was.
+
+**Setup, every boot:** integration's proof pair (`proof-36027bb7-r10`'s setup): a Quickplay pair on the Yoga, the GDB
+stub on both, TLS on, muted, the 1-stock save. Stage: `~/eden-runs/inputs-gif020/` on the Yoga.
+- **Plugins:** the rc.11 card set with the desync detector 0.5.1 `36027bb7`, the probe and the tile cursor on both.
+  - `gif020-before-1`: this plugin is not loaded (not in either plugin folder, no install line).
+  - `gif020-after-2`, `gif020-after-4`: this plugin's diag build `89980fba`. That is the source of `1d8d601` (the
+    card's release `749ed165`) plus one log line per carry. The release logs nothing per carry, so only the diag build
+    lets each carry be matched to its frame, as 0.1.0's after clip was (`dcec9d1a`).
+  - The diag build's install line: `plugin=ssbu-stall-press-carry/0.2.0 commit=branch/near decided=branch/near
+    diag_log=on stats=v1 result=installed heap_allocations=0`.
+- **Speed:** instance a at 70%.
+- **Play:** a's CPU pilot (armed through Online Deluxe) attacks b. b fights with one-frame C-stick flicks:
+  - one `input.stick` call on the right stick with a 16 ms lease and no neutral call;
+  - right, left, up and down in turn, one every 2.5 s, until the match ends on a KO;
+  - no walk-off.
+- **Recording:** b, 640 px wide, 15 fps, from the end of the countdown to the match's end.
+- **Matches:** two per boot (four in `gif020-after-4`), each after a check for pop-ups. Every match ended with
+  `sync_end trigger=normal … desync_seen=0` on both consoles at the same frame, with no `notice_text` line. Every boot
+  passed all its rows.
+- **Analysis:** `tools/flick_clip.py` (host tests in `tools/test_flick_clip.py`).
+  - **A flick** is a call that reached b's samples: a run of decided passes whose sample has the C-stick bit `0x80`.
+  - **Reached the game** means the game frame of the next commit consumed `0x80`.
+  - **Placement in the video:** through the probe's clock, lined up with the calls. The clock offset came out the same
+    in every match of the three boots (1793101973.00 to .03 s).
+
+| boot | match | calls | reached b's samples | reached the game | lost | carried (`cstick=yes` carry lines) |
+|---|---|---|---|---|---|---|
+| `gif020-before-1` | m-cs1 | 28 | 27 | 25 | 2 (flicks 6, 25) | — |
+| `gif020-before-1` | m-cs2 | 16 | 9 | 9 | 0 | — |
+| `gif020-after-2` | m-cs1 | 7 | 7 | 7 | 0 | 0 |
+| `gif020-after-2` | m-cs2 | 12 | 10 | 10 | 0 | 2 |
+| `gif020-after-4` | m-cs1 | 11 | 11 | 11 | 0 | 1 |
+| `gif020-after-4` | m-cs2 | 49 | 48 | 48 | 0 | 8 |
+| `gif020-after-4` | m-cs3 | 19 | 19 | 19 | 0 | 3 |
+| `gif020-after-4` | m-cs4 | 17 | 17 | 17 | 0 | 4 |
+
+- **The two lost flicks** were each in a single dropped pass, and the next frame consumed `0x8000` (no input).
+- **Why m-cs2 of the before boot had few flicks:** b ran at about 44 passes a second there (62 in m-cs1). So it
+  waited for a on only 9% of its decided passes (30% in m-cs1), and a 16 ms lease often fell between two of b's
+  samples.
+- **The detector's summaries on b:**
+  - `gif020-after-4`: `flick_carried=2`, `13`, `4` and `4` (23 in all), `flick_lost=0` in every match.
+  - `gif020-before-1`: no `stall_press` part, since this plugin wasn't loaded.
+
+**Every carry in `gif020-after-4`, console b:**
+- **How they are matched:** each of the 23 diag lines is matched to the probe's record of the same commit. The two
+  ticks are 0.01–0.57 ms apart.
+- **What the game got:** in every case the game frame consumed exactly the carried sample (`after`).
+- **The 16 C-stick carries** (`cstick=yes`) are 16 of the flicks above. The dropped samples held Attack and Smash
+  (`0x21`), the C-stick bit and the left stick at ±100 in the flick's direction. The commit's own sample had no
+  `0x80`.
+- **The 7 others** are left-stick flicks without the C-stick bit: (0, ±45) in a dropped sample right after an up or
+  down flick.
+
+| carry | `cstick` | bits | before | after | dropped since the last commit → commit | frame | consumed |
+|---|---|---|---|---|---|---|---|
+| 1 | no | 0x0 | 0x8000 | 0xd30000008000 | 5166D → 5167 | 636 | 0xd30000008000 |
+| 2 | yes | 0x21 | 0x8000 | 0x9c000080a1 | 6083D → 6084 | 1269 | 0x9c000080a1 |
+| 3 | yes | 0x21 | 0x8000 | 0x64000080a1 | 10352D → 10353 | 275 | 0x64000080a1 |
+| 4 | yes | 0x21 | 0x8000 | 0x9c00000080a1 | 11417D → 11418 | 1028 | 0x9c00000080a1 |
+| 5 | yes | 0x21 | 0x8000 | 0x9c000080a1 | 11706D, 11707D → 11708 | 1243 | 0x9c000080a1 |
+| 6 | yes | 0x21 | 0x2d0000008000 | 0x6400000080a1 | 12475D, 12476D → 12477 | 1786 | 0x6400000080a1 |
+| 7 | yes | 0x21 | 0x8000 | 0x9c000080a1 | 12940D → 12941 | 2105 | 0x9c000080a1 |
+| 8 | yes | 0x21 | 0x8000 | 0x6400000080a1 | 13091D → 13092 | 2212 | 0x6400000080a1 |
+| 9 | yes | 0x21 | 0x2d0000008000 | 0x6400000080a1 | 14314D, 14315D → 14316 | 3072 | 0x6400000080a1 |
+| 10 | no | 0x0 | 0x8000 | 0xd30000008000 | 14474D → 14475 | 3181 | 0xd30000008000 |
+| 11 | no | 0x0 | 0x8000 | 0x2d0000008000 | 15544D → 15545 | 3935 | 0x2d0000008000 |
+| 12 | yes | 0x21 | 0x8000 | 0x9c00000080a1 | 15695D → 15696 | 4039 | 0x9c00000080a1 |
+| 13 | no | 0x0 | 0x8000 | 0x2d0000008000 | 16164D → 16165 | 4365 | 0x2d0000008000 |
+| 14 | no | 0x0 | 0x8000 | 0x2d0000008000 | 17398D → 17399 | 5229 | 0x2d0000008000 |
+| 15 | yes | 0x0 | 0x8000 | 0x6400008080 | 17707D → 17708 | 5441 | 0x6400008080 |
+| 16 | yes | 0x21 | 0x8000 | 0x9c000080a1 | 22097D → 22098 | 413 | 0x9c000080a1 |
+| 17 | yes | 0x21 | 0x8000 | 0x6400000080a1 | 23481D → 23482 | 1387 | 0x6400000080a1 |
+| 18 | yes | 0x21 | 0x2d0000008000 | 0x6400000080a1 | 24092D, 24093D → 24094 | 1815 | 0x6400000080a1 |
+| 19 | no | 0x0 | 0x8000 | 0x2d0000008000 | 24713D → 24714 | 2250 | 0x2d0000008000 |
+| 20 | yes | 0x21 | 0x8000 | 0x9c00000080a1 | 29933D → 29934 | 1037 | 0x9c00000080a1 |
+| 21 | yes | 0x21 | 0x8000 | 0x64000080a1 | 30086D → 30087 | 1143 | 0x64000080a1 |
+| 22 | yes | 0x21 | 0x8000 | 0x64000080a1 | 30699D → 30700 | 1573 | 0x64000080a1 |
+| 23 | yes | 0x21 | 0x8000 | 0x6400000080a1 | 31004D → 31005 | 1787 | 0x6400000080a1 |
+
+Carry 15 added no buttons (`bits=0x0`), because the commit before it already had Attack and Smash; it added the stick
+and the C-stick bit. `gif020-after-2`'s three carries (two C-stick, one at (0, -45)) matched the same way.
+
+**`docs/evidence/cstick-before.gif`** (flick 6 of `gif020-before-1` m-cs1):
+- Sephiroth, b's fighter, stands near the left edge.
+- The C-stick flick to the left is in one sample, which the game drops, and the next frame gets nothing (`0x8000`).
+- He doesn't attack until the clip ends 1.8 s later.
+
+**`docs/evidence/cstick-after.gif`** (flick 18 of `gif020-after-4` m-cs2):
+- a's King K. Rool is next to Sephiroth, on his left.
+- The flick to the left is in one sample, which the game drops (pass 12940).
+- Carry 7 puts it into the next commit (frame 2105). Sephiroth swings his forward smash to the left and hits K. Rool,
+  whose damage goes from 38% to 51%.
+
+Both clips run from 0.6 s before to 1.8 s after the flick, at half speed: 640 px wide, at most 12.5 frames a second,
+3.0 and 2.9 MB. `docs/media/cstick-before-after.gif` puts them side by side: 1280 px wide, 4.9 s, 6.2 MB.
+
+**Not used:**
+- **`gif020-after-1`** was refused at Up: another user's compile on the Yoga left too little free memory.
+- **`gif020-after-3`:** b stayed on "Launching…" past the 180 s load gate, so no match was played; Down and a fresh
+  boot (`-4`).
+- **`gif020-after-2`'s carried flick 2:** a clean clip, but the camera was zoomed far out.
+- **The other lost flick (25):** b was being hit at the time, so the missing move can't be seen on screen.
+
+
 ## In all runs
 - Console a, which waits rarely, needed no carry.
 - The game consumed exactly the committed records on every frame (0 mismatches).
