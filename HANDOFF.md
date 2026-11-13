@@ -1,11 +1,14 @@
 # Handoff
 
-- **Playbook:** `ssbu-mod-playbook` `4ca80e1` (= `origin/main` on 2026-11-12 12:44Z), read in full from a `git archive`
-  export at `/tmp/opencode/pb-4ca80e1`. The clone at `~/ssbu-mod-playbook` is at `7fd362e` with another agent's
-  uncommitted runner-library changes, so it was left alone.
-- **Order:** the operator, 2026-11-12, via the primary at 12:43Z: install on the card and push. Push `main` only, with
-  no tag and no release until the operator confirms the card install.
-- **Branch:** `main` only.
+- **Playbook:** `ssbu-mod-playbook` `913fa6e`, read in full from a `git archive` export; `1ee0a08` (`origin/main` on
+  2026-11-13 06:30Z) changes docs only, and its diff was read. The compliance check runs from a `1ee0a08` export.
+- **Orders (2026-11-13):**
+  - the primary, 05:13Z: the README GIFs at GO with a stall of the other console set up and disclosed;
+  - the operator, via the primary: check every doc for staleness.
+  - Push: fast-forward to `main` only, no tag and no release, as `crashbandicode`.
+- **Branch:** `main` only, locally and on Forgejo.
+- **Card (2026-11-13):** this plugin's release `749ed165`, with the desync detector 0.5.1 `36027bb7` and TrainingRooms
+  rc.11 (`smash-training-lobby/artifacts/card-install-rc11/`).
 - **Measured with:** `ssbu-input-cadence-probe` (`/home/intpa/ssbu-input-cadence-probe`). It judges each press seen
   first in a dropped lockstep sample by the input the game frame consumed.
 - **Design and results:**
@@ -13,23 +16,23 @@
   - `smash-training-lobby/artifacts/phase23/LANE-DOUBLE-INPUT-RESEARCH.md`;
   - `docs/EDEN-RESULTS.md`.
 
-## 0.2.0 (2026-11-12, current)
+## 0.2.0 (2026-11-12 to 11-13, current)
 
 - **Order:** the primary, 17:01Z, relaying the operator: counters, a stats export for the desync detector's
   end-of-session summary, and a flick carry. No tag. The primary installs it on the card.
 - **Commits:** `51c5145` (flick carry, counters, export) and `90cc614` (a pass more than 2 s after the last one
-  starts a new session). Local; `main` will be pushed after the Eden proof.
+  starts a new session), pushed after the Eden proof.
 - **Design and trace:** `smash-training-lobby/artifacts/phase23/double-input/DESIGN-stall-press-carry-0.2.0.md`.
 - **Builds:** `90cc614` release `29dfd4ab…`, diag `711db630…` (left stick only). The right stick (C-stick) added on
-  the operator's "no add it to 0.2.0" (via the primary 20:03Z), version unchanged: release `1bbc2d7b…`, diag
+  the operator's order to add it to 0.2.0 (via the primary 20:03Z), version unchanged: release `1bbc2d7b…`, diag
   `b303fede…`, 33 host tests. `tools/delivery.py` judges one-frame inputs from the probe's records.
 - **Eden:** `proof-dc8ee988-r4` (`29dfd4ab`) and `-r5` (`1bbc2d7b`), integration's Yoga pair; see `docs/EDEN-RESULTS.md`.
 - **Card (the primary, 2026-11-12 ~20:30Z):** `1bbc2d7b…` installed over `2b6ff493…`, `installed_verified`;
   rollback `ultimate/ssbu-stall-press-carry/backups/pre-1bbc2d7bc15ebfd1.nro`; receipts
   `smash-training-lobby/artifacts/card-install-stall-press-carry-0.2.0/`.
 - **Pushed:** `main` to Forgejo, no tag (tags and releases wait until the operator has played).
-- **The C-stick bit** (the operator, via the primary 20:40Z: "yes add the 0x80 bit to 0.2.0"): `0x80` rides along with
-  a carried left-stick flick from a C-stick sample. Release `749ed165…`, diag `89980fba…`, 37 host tests.
+- **The C-stick bit** (the operator's order via the primary 20:40Z to add the `0x80` bit to 0.2.0): `0x80` rides
+  along with a carried left-stick flick from a C-stick sample. Release `749ed165…`, diag `89980fba…`, 37 host tests.
   - Eden r6 (`proof-dc8ee988-r6`): m2 PASS but only 9 of 216 inputs ran; the `0x80` branch had no chance to act.
   - Card (the primary, ~21:07Z): `1bbc2d7b` → `749ed165`, `installed_verified` then `verified_in_place`; rollback
     `ultimate/ssbu-stall-press-carry/backups/pre-749ed165c6b941dd.nro`; receipts
@@ -64,7 +67,12 @@
     (`smash-training-lobby/artifacts/phase23/double-input/gif-020-stall/`; 07:28Z: approved, asking that the text name
     whose press it is).
   - **Open:** a dropped C-stick sample with a neutral left stick (`0x80a1`) gets Attack+Smash carried but not the
-    C-stick bit (2 cases). 0.2.0 sets `0x80` only with a carried stick flick.
+    C-stick bit (2 cases). 0.2.0 sets `0x80` only with a carried stick flick (`docs/TECHNICAL.md`, "Not covered").
+- **Pushed:** `2a78cc8` (the stall GIFs and the docs about them), fast-forward on `2849027`, no tag.
+- **Stale-doc check (2026-11-13):** every doc checked claim by claim; the report is
+  `smash-training-lobby/artifacts/doc-stale-check-20261113/ssbu-stall-press-carry.md`. The fixes outside the GIF
+  lines are one commit on `2a78cc8`, held locally (the primary, 07:28Z: the operator gets one question covering
+  every lane's doc pushes).
 
 ## State (0.1.0)
 
@@ -82,11 +90,15 @@
 
 M items: all apply. C items:
 - **Hook sharing:** no card plugin hooks `0x16d81dc` or `0x16d8714` (scan of the rc.9 and rc.10 readbacks). Online
-  Deluxe reads `0x16d81a8` with its guard at `0x16d81a4`–`0x16d81b7`, outside this plugin's windows.
+  Deluxe reads `0x16d81a8` with its guard at `0x16d81a4`–`0x16d81b7`, outside this plugin's windows. On rc.11, the
+  desync detector 0.5.1 was checked (2026-11-13): none of the 13.0.5 addresses in its source is within 64 bytes of
+  this plugin's windows (`0x16d81dc`–`0x16d821b`, `0x16d8714`–`0x16d8753`).
   - `chain.rs` handles a foreign hook. Chaining onto the probe's branches worked in Eden (`branch/near`), in one load
     order.
   - The stand-in tests (`foreign=inline`/`far`) and the reverse load order were skipped on the primary's 12:43Z order,
     since no card plugin is at these sites.
+- **Guards:** both 64-byte guards in `src/model.rs` match the 13.0.5 main ELF (`0789f0a4…`) at their offsets
+  (`tools/site_bytes.py`, 2026-11-13).
 - **Online rules:** the plugin writes this console's own local samples before they are packed into its input record.
   It draws no random number, writes no simulated state and skips nothing. Both consoles consume the same record
   (`desync_seen=0` checked in Eden).

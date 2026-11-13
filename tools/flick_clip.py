@@ -12,7 +12,8 @@ controls the game maps a C-stick input into the attack bits, the left stick's di
 a flick is a run of decided passes whose local sample has `0x80` (`delivery.py`'s `cstick_on`), judged by the input the
 game frame consumed for the first commit at or after the run's first pass. Runs are matched to the calls through the
 clock offset that lines them up (`press_clip.align`); a boot can hold two matches, so only the probe session the calls
-line up with is used.
+line up with is used. A longer match's session can line up with every call of a shorter one (`gif020-before-1`
+m-cs1's did with m-cs2's calls); pass `--session` then. `input_clip.py` picks the session by its leftover runs instead.
 - **Lost:** every pass of the run was dropped and the game frame did not get `0x80`.
 - **Carried:** the run starts on a dropped pass, and this plugin's diag carry line for the next commit (`flick=carried
   stick=left cstick=yes`, its tick within 2 ms of the probe's record of that commit) shows the commit's own sample

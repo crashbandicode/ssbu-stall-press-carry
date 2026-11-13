@@ -6,13 +6,16 @@
 
 Reads one console's ssbu-input-cadence-probe records (64-byte, `passes-NN.bin`). A stimulus run is a run of decided
 passes whose local sample shows the input: the Jump bit (0x4), the Attack bit (0x1), the C-stick-in-use bit (0x80,
-`cstick_on`), or a stick (the left stick, or the
-right stick: `cstick_*`) at flick strength (84 of 120) to the left, the right, up or down. Each run is judged by the input the game frame consumed for the first
-commit at or after the run's first pass (the probe's consumed cell, matched to committed frames as `press_clip.py`
-does):
+`cstick_on`), or a stick (the left stick, or the right stick: `cstick_*`) at flick strength (84 of 120) to the left,
+the right, up or down. Each run is judged by the input the game frame consumed for the first commit at or after the
+run's first pass (the probe's consumed cell, matched to committed frames as `press_clip.py` does):
 - `delivered`: the consumed input shows the stimulus;
 - `all_dropped`: every pass of the run was dropped (a stalled pass at the steady lead), so the plain game loses it;
-- `carried`: all dropped and still delivered: ssbu-stall-press-carry's doing.
+- `carried`: all dropped and still delivered: ssbu-stall-press-carry's doing. This misses most carries: the probe
+  reads the commit after this plugin, so a carried input's run usually ends in that commit (`D…DC`) and counts as
+  `delivered`. In `proof-dc8ee988-r4`, `-r5` and `-r7` it counted 0, 0 and 2 `carried`, against this plugin's
+  `rescued=8`, `5` and `12` and `flick_carried=0`, `11` and `15`. Count carries with this plugin's counters or its
+  diag carry lines.
 - `lost_under_0_1_0`: all dropped and a stick flick. 0.1.0 carries buttons only and never writes the stick bytes, so
   it can't deliver these. Buttons carry the same way in both versions.
 `--inputs` adds the harness's call counts per kind (the wall-time log). Per probe session. Read-only on its inputs."""

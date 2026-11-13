@@ -1,4 +1,6 @@
-# Eden results (2026-11-12)
+# Eden results (2026-11-12 to 11-13)
+
+## 0.1.0: `dbl-v-94eda31`, `dbl-f-8302362` and `dbl-g2-a666812` (2026-11-12)
 
 **Setup:**
 - **Host:** the Yoga. Quickplay pairs: two Eden instances on one host, TLS on, this pair the only one on the host.
@@ -59,7 +61,8 @@ to the probe's record of the same pass by the console's system tick
 - **The pilot** was armed through Online Deluxe's overlay on both consoles.
 - **Instance a at 85% speed.** The GDB stub was on, TLS on, volume 0, and the 1-stock save was used.
 
-**Release reproducibility:** `02420ee` built twice with fresh `CARGO_TARGET_DIR`s gives `2b6ff493…` both times.
+**Release reproducibility:** `02420ee` built twice with fresh `CARGO_TARGET_DIR`s gives `2b6ff493…` both times
+(`smash-training-lobby/artifacts/phase23/double-input/COMPLIANCE-stall-press-carry.md`).
 
 **Results:**
 
@@ -68,8 +71,8 @@ to the probe's record of the same pass by the console's system tick
 | m1 | 4,842 | `trigger=normal … desync_seen=0` at the same frame | 28 | 28 | 0 |
 | m2 | 5,707 | `trigger=normal … desync_seen=0` at the same frame | 18 | 18 | 0 |
 
-- **Stalls:** b stalled on 13–14% of its frames and dropped 1,737 samples on stalled passes. Consumed = committed on
-  every frame on both consoles.
+- **Stalls:** b stalled on 14% of its sampled passes (814 of 5,660 in m1, 931 of 6,642 in m2) and dropped 1,737
+  samples on stalled passes. Consumed = committed on every frame on both consoles (4,846 and 5,711 frames checked).
 - **Install lines:**
   - **This plugin:** `commit=branch/near decided=branch/near result=installed heap_allocations=0` on both (chained onto
     the probe's hooks, which loaded first).
@@ -77,8 +80,8 @@ to the probe's record of the same pass by the console's system tick
     both.
   - **Online Deluxe:** 0.10.5's overlay loaded (the pilot's `deluxe_overlay=found`, 54 overlay entries per console).
 - **No crash:** no panic, abort, crash or Unmapped line on either console.
-- **Not run:** no Eden run had this plugin without the probe. That case takes the stock path, the one the probe took at
-  these same two instructions (`stock/near`).
+- **Without the probe:** not run in 0.1.0. 0.2.0 ran without it in integration's local wireless run (below) and
+  took the stock path there (`stock/near`).
 
 ## The before/after GIF: `dbl-gb2-02420ee` and `dbl-ga-02420ee` (2026-11-12 13:21–13:40Z)
 
@@ -148,7 +151,7 @@ Integration's Yoga pair (`smash-training-lobby/artifacts/phase23/double-input/ru
 
 The same pair and card set with this plugin's release `1bbc2d7b` (`dcc955f`). b's m2 inputs: 40 C-stick flicks and 16
 diagonals on both sticks, one frame (16 ms) each, then Jump taps and left-stick dash, smash and fast-fall flicks; the
-match ended at frame 2828.
+match ended at frame 2824.
 - **Reached b's samples, and the game:** A 53/53, Jump 9/9, left stick left 18/18, right 20/20, up 14/14, down 18/18
   (`tools/delivery.py`; `runs/proof-dc8ee988-r5/delivery-b.json`).
 - **This plugin's counters** (the detector's summary on b): `rescued=5 (attack=5) dropped=1220 committed=115
@@ -229,11 +232,12 @@ stub on both, TLS on, muted, the 1-stock save. Stage: `~/eden-runs/inputs-gif020
 - **How they are matched:** each of the 23 diag lines is matched to the probe's record of the same commit. The two
   ticks are 0.01–0.57 ms apart.
 - **What the game got:** in every case the game frame consumed exactly the carried sample (`after`).
-- **The 16 C-stick carries** (`cstick=yes`) are 16 of the flicks above. The dropped samples held Attack and Smash
-  (`0x21`), the C-stick bit and the left stick at ±100 in the flick's direction. The commit's own sample had no
+- **The 16 C-stick carries with `bits=0x21`** are the 16 carried flicks above. The dropped samples held Attack and
+  Smash (`0x21`), the C-stick bit and the left stick at ±100 in the flick's direction. The commit's own sample had no
   `0x80`.
-- **The 7 others** are left-stick flicks without the C-stick bit: (0, ±45) in a dropped sample right after an up or
-  down flick.
+- **Carry 15** (`cstick=yes`, `bits=0x0`) is the seventeenth line with the C-stick bit; see below the table.
+- **The 6 with `cstick=no`** are left-stick flicks without the C-stick bit: (0, ±45) in a dropped sample right after
+  an up or down flick.
 
 | carry | `cstick` | bits | before | after | dropped since the last commit → commit | frame | consumed |
 |---|---|---|---|---|---|---|---|
@@ -395,12 +399,31 @@ right, 0%). The README GIFs are `docs/media/<pair>.gif`; the clips are `docs/evi
   - `docs/evidence/<pair>-{before,after}-clip.json`: the attempt each clip shows (its passes, frame, consumed input
     and carry line), the stall window and every output frame's start time.
 
-## In all runs
-- Console a, which waits rarely, needed no carry.
-- The game consumed exactly the committed records on every frame (0 mismatches).
-- Every session ended with `desync_seen=0` on both consoles at the same frame.
+## Local wireless and offline
+
+**Local wireless:** integration's `a-ldn-fix020t-0c628724` (2026-11-12,
+`smash-training-lobby/artifacts/phase23/rc10-cores/ldn-fix020t/`), a local wireless match between two Eden instances.
+- **This plugin:** the 0.2.0 diag build `711db630` (`90cc614`), with the desync detector and without the probe.
+- **Install line, both:** `plugin=ssbu-stall-press-carry/0.2.0 commit=stock/near decided=stock/near diag_log=on
+  stats=v1 result=installed heap_allocations=0`.
+- **The detector's summaries:** this plugin's hooks saw the lockstep drop samples (`dropped=18` on one console, `9` on
+  the other). No press fell on a dropped sample, so nothing was carried (`rescued=0 … flick_carried=0`).
+- **The match:** `sync_end trigger=normal … desync_seen=0` on both at frame 815. All 14 rows passed.
+
+**Offline:** `dbl-off2-dcec9d1a` (2026-11-12 15:17–15:36Z, the XPS), one console with 0.1.0's diag build `dcec9d1a`
+and the probe. 40 Jump taps in Training and 60 in an offline 1-stock match against a CPU gave 0 probe records (the
+lockstep never ran) and 0 carry lines. Offline play doesn't go through the lockstep that this plugin hooks.
+
+## Across the runs
+
+- **Desync:** every match above with a `sync_end` result ended with `desync_seen=0` on both consoles at the same
+  frame. The evidence kept for `dbl-gb2-02420ee` and `dbl-ga-02420ee` has no `sync_end` line.
+- **Consumed = committed:** the probe's check that each game frame consumed exactly the committed record found 0
+  mismatches on both consoles in V, F, F2 and `dbl-k-02420ee`. It wasn't run on the later boots.
+- **Console a**, which waits rarely, needed no carry in F2: its carry log has only the install line.
 
 **Not run:**
 - the hook-sharing stand-in modes (`foreign=inline`/`far`) and the reverse load order;
 - a replay A/B;
-- a Switch (no install order).
+- a measured match on a Switch. The release `749ed165` is on the card (the primary's install), but no Switch match
+  has been measured.

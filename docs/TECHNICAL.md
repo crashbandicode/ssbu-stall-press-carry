@@ -21,17 +21,24 @@ A Skyline plugin for Super Smash Bros. Ultimate 13.0.5. The README shows what it
 
 **Install and log:**
 - **Install:** `atmosphere/contents/01006A800016E000/romfs/skyline/plugins/libssbu_stall_press_carry.nro`.
-- **Log:** `sd:/ultimate/ssbu-stall-press-carry/events.log`, the install line only.
+- **Log:** `sd:/ultimate/ssbu-stall-press-carry/events.log`, the install line only (the diag build adds a line per
+  carry).
 
 **Hook sites** (13.0.5 `.text`, 64-byte guards, inline):
 - `0x16d81dc`: the lockstep's commit path, before the record is packed;
 - `0x16d8714`: after the commit or the drop.
 
-Both or neither are installed.
+**When the hooks go in:** if either site holds a foreign hook this plugin can't chain onto, neither is hooked
+(`result=not_installed`). If only one of the two hooks goes in, the install line says `result=partial`, and nothing
+is carried: the commit hook alone has nothing to add, and the drop hook alone only collects. On a game version other
+than 13.0.5 nothing is hooked (`result=unsupported_version`).
 
 **Not covered:**
 - a flick that becomes a different direction by the next frame (a dash-dance reversal, left alone);
-- releasing a held button and pressing it again within one wait.
+- releasing a held button and pressing it again within one wait;
+- a dropped C-stick sample whose left stick is neutral (`0x80a1`: the C-stick bit with Attack and Smash). Attack and
+  Smash are carried, but the C-stick bit isn't, since 0.2.0 sets it only with a carried stick flick. Seen twice in
+  Eden (`docs/EDEN-RESULTS.md`, `gif020-in-*`).
 
 ## Buttons (0.1.0)
 
@@ -91,8 +98,9 @@ dash, a smash attack, a fast fall, or a C-stick smash or aerial.
   flick_carried=… flick_lost=…`).
 - The release build adds no log line; its install line says `stats=v1`.
 
-**The diag build** (Eden only) also logs one line per carry: the bits added, the first local sample before and after,
-which stick (`stick=left|right`), and whether the C-stick bit came along (`cstick=yes|no`).
+**The diag build** (Eden only) also logs one line per carry: the bits added, what happened to a stick flick
+(`flick=none|carried|reversal`), which stick (`stick=none|left|right`), whether the C-stick bit came along
+(`cstick=yes|no`), and the first local sample before and after.
 
 ## Build
 

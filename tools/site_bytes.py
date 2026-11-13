@@ -3,8 +3,9 @@
 Usage: site_bytes.py <main-text.elf> <hex offset>...
 
 Offsets are main-module virtual addresses (the same numbers the plugin adds
-to the text base). The ELF used on 2026-10-31 was
-/home/intpa/elite-rematch-work/re/main-text.elf. Read-only."""
+to the text base). On 2026-11-13 the guards in src/model.rs matched
+/home/intpa/smash-training-lobby/research/game-13.0.5/main-13.0.5.elf
+(sha256 0789f0a4…) at 0x16d81dc and 0x16d8714. Read-only."""
 import struct
 import sys
 
