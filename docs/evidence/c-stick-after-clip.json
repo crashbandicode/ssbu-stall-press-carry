@@ -1,0 +1,329 @@
+{
+ "attempt": {
+  "attempt": 0,
+  "kind": "cstick",
+  "at": "go",
+  "x": -1.0,
+  "y": 0.0,
+  "buttons": [],
+  "sent": 1794549378.9427056,
+  "rec": 0,
+  "patterns": [
+   "DD"
+  ],
+  "passes": [
+   [
+    "21390D",
+    "21391D"
+   ]
+  ],
+  "outcome": "carried",
+  "first_tick": 27790190484313,
+  "frame": 231,
+  "consumed": "0x9c000080a1",
+  "carry": {
+   "n": 12,
+   "bits": "0x21",
+   "flick": "carried",
+   "stick": "left",
+   "cstick": "yes",
+   "before": "0x8000",
+   "after": "0x9c000080a1"
+  },
+  "dropped": [
+   "21390D",
+   "21391D"
+  ],
+  "commit_pass": 21411,
+  "call_gap_s": 0.0012,
+  "gif": "/home/intpa/eden-runs/gif020-stall-after-1/out/m-go3/m-go3-b-0.gif",
+  "at_s": 1.491
+ },
+ "stall_window_s": [
+  -0.34860992431640625,
+  0.351226806640625
+ ],
+ "who": "Sephiroth",
+ "clip": "/home/intpa/gif-work/pairs/s2-cstick/after.gif",
+ "frames": 69,
+ "seconds": 5.57,
+ "bytes": 3251159,
+ "pngs": [
+  [
+   0,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0000.png"
+  ],
+  [
+   190,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0001.png"
+  ],
+  [
+   290,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0002.png"
+  ],
+  [
+   390,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0003.png"
+  ],
+  [
+   490,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0004.png"
+  ],
+  [
+   560,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0005.png"
+  ],
+  [
+   630,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0006.png"
+  ],
+  [
+   710,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0007.png"
+  ],
+  [
+   780,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0008.png"
+  ],
+  [
+   850,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0009.png"
+  ],
+  [
+   930,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0010.png"
+  ],
+  [
+   1000,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0011.png"
+  ],
+  [
+   1170,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0012.png"
+  ],
+  [
+   1340,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0013.png"
+  ],
+  [
+   1510,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0014.png"
+  ],
+  [
+   1580,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0015.png"
+  ],
+  [
+   1660,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0016.png"
+  ],
+  [
+   1730,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0017.png"
+  ],
+  [
+   1800,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0018.png"
+  ],
+  [
+   1880,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0019.png"
+  ],
+  [
+   1950,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0020.png"
+  ],
+  [
+   2020,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0021.png"
+  ],
+  [
+   2100,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0022.png"
+  ],
+  [
+   2170,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0023.png"
+  ],
+  [
+   2240,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0024.png"
+  ],
+  [
+   2310,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0025.png"
+  ],
+  [
+   2410,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0026.png"
+  ],
+  [
+   2480,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0027.png"
+  ],
+  [
+   2560,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0028.png"
+  ],
+  [
+   2630,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0029.png"
+  ],
+  [
+   2710,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0030.png"
+  ],
+  [
+   2780,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0031.png"
+  ],
+  [
+   2850,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0032.png"
+  ],
+  [
+   2930,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0033.png"
+  ],
+  [
+   3000,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0034.png"
+  ],
+  [
+   3070,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0035.png"
+  ],
+  [
+   3150,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0036.png"
+  ],
+  [
+   3220,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0037.png"
+  ],
+  [
+   3290,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0038.png"
+  ],
+  [
+   3370,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0039.png"
+  ],
+  [
+   3440,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0040.png"
+  ],
+  [
+   3510,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0041.png"
+  ],
+  [
+   3590,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0042.png"
+  ],
+  [
+   3660,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0043.png"
+  ],
+  [
+   3730,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0044.png"
+  ],
+  [
+   3810,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0045.png"
+  ],
+  [
+   3880,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0046.png"
+  ],
+  [
+   3950,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0047.png"
+  ],
+  [
+   4030,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0048.png"
+  ],
+  [
+   4100,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0049.png"
+  ],
+  [
+   4170,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0050.png"
+  ],
+  [
+   4250,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0051.png"
+  ],
+  [
+   4320,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0052.png"
+  ],
+  [
+   4390,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0053.png"
+  ],
+  [
+   4470,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0054.png"
+  ],
+  [
+   4540,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0055.png"
+  ],
+  [
+   4610,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0056.png"
+  ],
+  [
+   4690,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0057.png"
+  ],
+  [
+   4760,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0058.png"
+  ],
+  [
+   4830,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0059.png"
+  ],
+  [
+   4910,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0060.png"
+  ],
+  [
+   4980,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0061.png"
+  ],
+  [
+   5050,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0062.png"
+  ],
+  [
+   5130,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0063.png"
+  ],
+  [
+   5200,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0064.png"
+  ],
+  [
+   5280,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0065.png"
+  ],
+  [
+   5350,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0066.png"
+  ],
+  [
+   5420,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0067.png"
+  ],
+  [
+   5490,
+   "/home/intpa/gif-work/pairs/s2-cstick/after-frames/0068.png"
+  ]
+ ]
+}

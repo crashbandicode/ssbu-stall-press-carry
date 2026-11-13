@@ -38,7 +38,7 @@
   - Next: integration's r7, a full-length m2; `tools/delivery.py` on its `collect`.
   - r7 (`proof-dc8ee988-r7`): 0 C-stick bits lost; the primary accepted it. The card is final (the primary,
     2026-11-13 00:23Z): this plugin `749ed165`, detector 0.5.1 `36027bb7`, TrainingRooms rc.11.
-- **The C-stick GIF** (the primary 2026-11-13 00:23Z; the operator: "gifs updated?"):
+- **The C-stick GIF** (the primary 2026-11-13 00:23Z; the operator asked whether the GIFs were updated):
   `docs/media/cstick-before-after.gif`, with the clips `docs/evidence/cstick-before.gif` and `cstick-after.gif`.
   - Runs on the Yoga, stage `~/eden-runs/inputs-gif020/`: `gif020-before-1` (this plugin not loaded) and
     `gif020-after-4` (diag `89980fba`, one line per carry; `-2` also ran, `-1` and `-3` didn't reach a match); see
@@ -46,8 +46,25 @@
   - After clip: diag, not the release, because only the diag build's carry lines tie a carry to its frame (as 0.1.0's
     after clip did). 23 of 23 carries in `gif020-after-4` matched and delivered; 0 C-stick flicks lost with the plugin
     (112 of 112 reached the game), 2 of 36 without it.
-  - Made with `tools/flick_clip.py`.
-  - Pushed to `main`, no tag.
+  - Made with `tools/flick_clip.py`. Pushed as `2849027`, no tag.
+- **The README redo** (the operator's review via the primary 01:55Z: the GIFs looked off, and the README was too long
+  a wall of text):
+  - **Three pairs:** `docs/media/jump.gif`, `left-stick.gif`, `c-stick.gif`, with an input display drawn from the
+    harness log and the probe (`tools/input_clip.py`).
+  - **The README is GIF-led;** everything technical moved to `docs/TECHNICAL.md`. The old README GIFs
+    `before-after.gif` and `cstick-before-after.gif` and the C-stick clips are removed (in git history at `2849027`).
+  - **First try:** `gif020-in-before-1`, `-before-2`, `-after-1` to `-after-4`, inputs the game dropped on its own
+    mid-match. The primary's review: the two sides of each pair weren't set up the same way. Not pushed; the counts
+    are in `docs/EDEN-RESULTS.md`.
+  - **The pushed pairs:** `gif020-stall-before-1` and `gif020-stall-after-1`, one press 0.6 s after GO, with console a
+    paused for 0.7 s around it on both sides (the primary's 05:13Z order). The README and every caption say the stall
+    is set up, and that the press is Sephiroth's while K. Rool (a's CPU) moves on its own. 9 of 9 presses lost without
+    the plugin, 9 of 9 carried with it.
+  - **The primary reviewed the stills before the push**
+    (`smash-training-lobby/artifacts/phase23/double-input/gif-020-stall/`; 07:28Z: approved, asking that the text name
+    whose press it is).
+  - **Open:** a dropped C-stick sample with a neutral left stick (`0x80a1`) gets Attack+Smash carried but not the
+    C-stick bit (2 cases). 0.2.0 sets `0x80` only with a carried stick flick.
 
 ## State (0.1.0)
 

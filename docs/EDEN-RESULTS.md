@@ -112,8 +112,9 @@ jumped. At 14% stalls no tap fell entirely on dropped passes, so the GIF boots u
 - Tap 13's sample is dropped as well.
 - This plugin's carry line names it, the next frame receives it, and b jumps.
 
-Both clips are 0.9 s before to 1.4 s after the tap, at quarter speed, 640 px wide. `before-after.gif` puts them side
-by side.
+Both clips are 0.9 s before to 1.4 s after the tap, at quarter speed, 640 px wide. `before-after.gif` put them side
+by side; it was the README GIF until 2026-11-13, when the three pairs below replaced it (it is in git history at
+`2849027`).
 
 ## 0.2.0 with the desync detector 0.5.0: `proof-dc8ee988-r4` (2026-11-12 19:57–20:07Z)
 
@@ -178,7 +179,7 @@ call, and none reached the samples. The idle console a was removed by the game's
 
 ## The C-stick before/after GIF: `gif020-before-1` and `gif020-after-4` (2026-11-13 00:33–01:37Z)
 
-The primary's order of 00:23Z (the operator: "gifs updated?"): a C-stick flick that the game drops, lost without this
+The primary's order of 00:23Z (the operator asked whether the GIFs were updated): a C-stick flick that the game drops, lost without this
 plugin and carried with it, made the way the 0.1.0 GIF was.
 
 **Setup, every boot:** integration's proof pair (`proof-36027bb7-r10`'s setup): a Quickplay pair on the Yoga, the GDB
@@ -263,19 +264,13 @@ stub on both, TLS on, muted, the 1-stock save. Stage: `~/eden-runs/inputs-gif020
 Carry 15 added no buttons (`bits=0x0`), because the commit before it already had Attack and Smash; it added the stick
 and the C-stick bit. `gif020-after-2`'s three carries (two C-stick, one at (0, -45)) matched the same way.
 
-**`docs/evidence/cstick-before.gif`** (flick 6 of `gif020-before-1` m-cs1):
-- Sephiroth, b's fighter, stands near the left edge.
-- The C-stick flick to the left is in one sample, which the game drops, and the next frame gets nothing (`0x8000`).
-- He doesn't attack until the clip ends 1.8 s later.
+**The clips** (removed on 2026-11-13; in git history at `2849027`):
+- `docs/evidence/cstick-before.gif`: flick 6 of `gif020-before-1` m-cs1, lost; the next frame got `0x8000`.
+- `docs/evidence/cstick-after.gif`: flick 18 of `gif020-after-4` m-cs2, carry 7 above.
+- `docs/media/cstick-before-after.gif` put them side by side.
 
-**`docs/evidence/cstick-after.gif`** (flick 18 of `gif020-after-4` m-cs2):
-- a's King K. Rool is next to Sephiroth, on his left.
-- The flick to the left is in one sample, which the game drops (pass 12940).
-- Carry 7 puts it into the next commit (frame 2105). Sephiroth swings his forward smash to the left and hits K. Rool,
-  whose damage goes from 38% to 51%.
-
-Both clips run from 0.6 s before to 1.8 s after the flick, at half speed: 640 px wide, at most 12.5 frames a second,
-3.0 and 2.9 MB. `docs/media/cstick-before-after.gif` puts them side by side: 1280 px wide, 4.9 s, 6.2 MB.
+The operator's review of these GIFs (2026-11-13, via the primary 01:55Z): the two sides were different situations, and
+nothing showed what was pressed. So the README GIFs were made again (below).
 
 **Not used:**
 - **`gif020-after-1`** was refused at Up: another user's compile on the Yoga left too little free memory.
@@ -284,6 +279,121 @@ Both clips run from 0.6 s before to 1.8 s after the flick, at half speed: 640 px
 - **`gif020-after-2`'s carried flick 2:** a clean clip, but the camera was zoomed far out.
 - **The other lost flick (25):** b was being hit at the time, so the missing move can't be seen on screen.
 
+
+## Three kinds of input, mid-match: `gif020-in-*` (2026-11-13 01:58–04:12Z)
+
+The primary's order of 01:55Z, after the operator's review: three pairs (a Jump tap, a left-stick input, a C-stick
+smash toward the opponent), each with the same situation on both sides, and an input display. These boots looked for
+inputs the game dropped on its own, mid-match. Their counts stand; their pairs were not used, because the two sides of
+each pair weren't set up the same way (the primary's review). The README GIFs come from the next section.
+
+**Setup, every boot:** as above (the stage `~/eden-runs/inputs-gif020/`), with:
+- **Eden:** the GDB-stub fix `2f315fc4` (`20261113-973abf9c2e3f-…`).
+- **Speed:** a at 70% (`-before-1`, `-after-1`, `-after-2`) or 60% (`-before-2`, `-after-3`, `-after-4`).
+- **Play:** a's CPU pilot attacks; b fights with one one-frame input every 2.2 s until the match ends on a KO, with no
+  walk-off.
+  - **The inputs:** a Jump tap (X); the left stick to one side with an A tap (left stick + A); or the C-stick to one
+    side. Each lease is 12 ms.
+  - **Order:** in turn (`-after-4`: left stick + A only).
+  - **Direction:** each stick input points toward a, from b's side of a's screen (the name tags); otherwise toward the
+    middle of the stage from b's spawn point.
+- **Recording:** b, 640 wide, 30 fps, in 40 s chunks.
+- **Analysis:** `tools/input_clip.py` (host tests in `tools/test_input_clip.py`).
+  - **A run:** each input kind has a signature in b's samples: Jump `0x4`; Attack `0x1` with the left stick at 84 or
+    more and no C-stick bit; the C-stick bit `0x80`.
+  - **Lining up:** runs are lined up with the calls of the same kind through one clock offset per match. It came out
+    the same in every match, 1793101973.05 to .12 s.
+  - **Lost:** every sample was dropped, and neither neighbouring game frame got any piece of the input.
+  - **Carried:** the carry line on the next commit shows the commit's own sample without the input and with it after
+    the carry, and the frame before got none of it.
+
+| boot | this plugin | matches | inputs | reached the game anyway | carried (each by a matching carry line) | lost | partly lost | never sampled |
+|---|---|---|---|---|---|---|---|---|
+| `gif020-in-before-1` | not loaded | 4 | 102 | 83 | — | 15 | 1 | 3 |
+| `gif020-in-before-2` | not loaded | 6 | 99 | 64 | — | 27 | 0 | 8 |
+| `gif020-in-after-1` | diag `89980fba` | 4 | 58 | 41 | 11 | 0 | 0 | 6 |
+| `gif020-in-after-2` | diag `89980fba` | 4 | 55 | 47 | 7 | 0 | 1 | 0 |
+| `gif020-in-after-3` | diag `89980fba` | 6 | 169 | 112 | 45 | 0 | 3 | 9 |
+| `gif020-in-after-4` | diag `89980fba` | 6 | 164 | 111 | 40 | 0 | 1 | 12 |
+
+- **The runs:** every row passed in all six boots. All 30 matches ended with `sync_end … desync_seen=0` on both
+  consoles, with no notice.
+- **Carry lines:** 103 of the 108 matched a carried input. The other 5 belong to the partial cases with the plugin.
+- **The partial cases with the plugin:**
+  - **3 split left stick + A inputs:** the stick reached a committed frame, and A was in the next sample, which was
+    dropped. The plugin carried A (`bits=0x201 flick=none`), so the game got both, one frame apart.
+  - **2 C-stick samples `0x80a1`:** they had the C-stick bit and Attack+Smash, but the left stick was neutral. The
+    plugin carried Attack+Smash (`bits=0x21 flick=none`) but not the C-stick bit, which 0.2.0 sets only with a carried
+    stick flick.
+  - The two C-stick cases are `gif020-in-after-2` m-in2 attempt 9 (frame 1091) and `gif020-in-after-3` m-in6
+    attempt 11 (frame 1118).
+
+**Why no matched pair came from these boots:**
+- **Most dropped inputs** fell while a was attacking, b was in hitstun or knocked down, or the fighters stood on
+  opposite sides from the other run's moment.
+- **GO:** an input at GO (both at their spawn points) was planned as the best-matched moment. None of those reached
+  b's samples on a dropped pass with the plugin absent.
+- **A later boot, `gif020-go-before-1`** (9 matches, one press just after GO each, no stall), lost none of those
+  presses. 3 came before the game took input (GO was first read from the name tags, which show before it), and the
+  game got the other 6. Hence the set-up stall below.
+
+## The README GIFs: `gif020-stall-before-1` and `gif020-stall-after-1` (2026-11-13 05:13–06:18Z)
+
+The primary's order of 05:13Z: pause console a for 0.7 s around b's one press at GO, the same on both sides, so only
+this plugin differs. The stall is set up so that the game drops the press every time; the README and the GIF captions
+say so.
+
+**Setup, both boots:** the stage and plugins above (the rc.11 card set with the desync detector 0.5.1, the probe and
+the tile cursor on both consoles), the fixed Eden `2f315fc4`, the GDB stub on before the game loads, muted.
+- **This plugin:** not loaded in `gif020-stall-before-1`; the diag build `89980fba` in `gif020-stall-after-1`.
+- **Speed:** a at 70%, played by its CPU pilot.
+- **Each match:** both fighters on their spawn points at 0%. GO is read live from b's probe records (b's sample turns
+  nonzero). 0.6 s after GO, b gets one one-frame input toward a (a 16 ms lease): a Jump tap (X), the left stick + A,
+  or the C-stick, in turn from match to match.
+- **The stall:** a's emulator is paused (`game.pause`) 0.35 s before b's input and resumed 0.35 s after it. Meanwhile
+  b's game waits for a, and b's lockstep drops about 21 samples in a row, the input's among them.
+- **After that:** b fights on with an input every 2.2 s, a's pilot attacks, and the match ends on a KO. There was no
+  stall after GO.
+- **Recording:** b, 640×360 at 30 fps, 20 s from just before GO.
+- **Analysis:** `tools/input_clip.py`, as above.
+
+| boot | this plugin | matches | GO inputs lost | GO inputs carried (each by a matching carry line) | later inputs: reached the game anyway | carried | lost | never sampled |
+|---|---|---|---|---|---|---|---|---|
+| `gif020-stall-before-1` | not loaded | 9 | 9 | — | 181 | — | 27 | 5 |
+| `gif020-stall-after-1` | diag `89980fba` | 9 | 0 | 9 | 147 | 27 | 0 | 5 |
+
+- **The GO inputs:**
+  - **Without the plugin:** every one was lost: 3 Jump, 3 left stick + A and 3 C-stick, the press in 1 or 2
+    dropped samples, at frames 232–234.
+  - **With it:** every one was carried, at frames 231–233.
+- **No match was dropped or rerun,** and there were no partial cases. Two more inputs of the after boot came after
+  their match had ended (past `sync_end`), so no frame consumed them; they aren't counted.
+- **Carry lines:** 36 in the after boot, each matched to one of its 36 carried inputs.
+- **Every match** ended with `sync_end … desync_seen=0` on both consoles, with no notice, and every row passed.
+
+**The pairs** (left: without this plugin; right: with it; the same layout on both sides: K. Rool left, Sephiroth
+right, 0%). The README GIFs are `docs/media/<pair>.gif`; the clips are `docs/evidence/<pair>-before.gif` and
+`-after.gif`.
+
+| pair | without: match, dropped samples, what the game got | with: match, dropped samples, carry line, what the game got |
+|---|---|---|
+| `jump` | m-go1: pass 4679; frame 232 `0x8000` | m-go1: pass 4724; n=1 `bits=0x4 before=0x8000 after=0x8004`; frame 233 `0x8004` |
+| `left-stick` | m-go2: pass 11635; frame 232 `0x8000` | m-go2: passes 13424–13425; n=4 `bits=0x201 flick=carried before=0x8000 after=0x8100008201`; frame 233 `0x8100008201` |
+| `c-stick` | m-go9: passes 63308–63309; frame 232 `0x8000` | m-go3: passes 21390–21391; n=12 `bits=0x21 flick=carried cstick=yes before=0x8000 after=0x9c000080a1`; frame 231 `0x9c000080a1` |
+
+- **Which matches:** the first of each kind with Sephiroth on the right on both sides. The before boot's first C-stick
+  matches (m-go3, m-go6) had the fighters the other way round, so its C-stick side is m-go9.
+- **What they show:** on the right, Sephiroth jumps, or swings a forward smash to the left. On the left he stands still
+  until the clip ends, 1.8 s after the press.
+- **The clips:** full speed until 0.2 s before the press, a 0.5 s hold on its frame, then half speed.
+  - The caption bar says "other console stalls (set up)" in orange inside the stall (measured: 0.34–0.35 s before the
+    press to 0.35 s after it).
+  - The input display is titled "Sephiroth's input (harness)" (`--who Sephiroth`), since K. Rool, a's CPU, moves on
+    its own and could be taken for the one pressing.
+  - The README GIFs are 1280×540, 5.5–5.6 s, 3.2–6.6 MB. The clips are 640×540, 1.1–3.3 MB, at most 14.3 frames a
+    second, with no frame shorter than 70 ms.
+  - `docs/evidence/<pair>-{before,after}-clip.json`: the attempt each clip shows (its passes, frame, consumed input
+    and carry line), the stall window and every output frame's start time.
 
 ## In all runs
 - Console a, which waits rarely, needed no carry.
