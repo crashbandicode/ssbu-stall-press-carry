@@ -2,10 +2,15 @@
 
 - **Playbook:** `ssbu-mod-playbook` `913fa6e`, read in full from a `git archive` export; `1ee0a08` (`origin/main` on
   2026-11-13 06:30Z) changes docs only, and its diff was read. The compliance check runs from a `1ee0a08` export.
+- **Release lane (2026-11-14):** playbook `13b2e83`, read in full (README, every file in `docs/`,
+  `tools/PROVENANCE.md`); `tools/check/compliance.py` ran from a `13b2e83` export.
 - **Orders (2026-11-13):**
   - the primary, 05:13Z: the README GIFs at GO with a stall of the other console set up and disclosed;
   - the operator, via the primary: check every doc for staleness.
   - Push: fast-forward to `main` only, no tag and no release, as `crashbandicode`.
+- **Order (2026-11-14 ~19:35Z):** the operator, via the primary: make a release. It authorizes one version tag, one
+  Forgejo release with the NRO attached, and pushing that tag, for this repo only: no code, no version bump, no card
+  write, no force push.
 - **Branch:** `main` only, locally and on Forgejo.
 - **Card (2026-11-13):** this plugin's release `749ed165`, with the desync detector 0.5.1 `36027bb7` and TrainingRooms
   rc.11 (`smash-training-lobby/artifacts/card-install-rc11/`).
@@ -16,7 +21,36 @@
   - `smash-training-lobby/artifacts/phase23/LANE-DOUBLE-INPUT-RESEARCH.md`;
   - `docs/EDEN-RESULTS.md`.
 
-## 0.2.0 (2026-11-12 to 11-13, current)
+## Release v0.2.0 (2026-11-14, current)
+
+- **Tag:** annotated `v0.2.0` (object `93daadec…`) on `71dcb0f`, `main`'s head, tagger `crashbandicode`; the tag was
+  pushed alone.
+  - `src/`, `Cargo.toml`, `Cargo.lock` and `rust-toolchain.toml` are unchanged since `1d8d601`, the commit the card
+    NRO was built at.
+  - The commits since change docs, the README, this file and host-side tools (`delivery.py`, `site_bytes.py`, the clip
+    scripts and their tests), none of which is in the NRO.
+- **Release:** <https://git.syntaxbyexample.com/intpa/ssbu-stall-press-carry/releases/tag/v0.2.0> (id 677),
+  `ssbu-stall-press-carry v0.2.0`, not a pre-release. Assets `libssbu_stall_press_carry.nro`, `manifest.json` and
+  `SHA256SUMS.txt`; the anonymous downloads equal the local files. NRO sha256
+  `749ed165c6b941dd6cd99a797bd1b987ec2b3dfd8ab7732afe6b53773d44c656`.
+- **Status as released:** Eden-tested (proofs r4 to r7, 2026-11-12); on the operator's card since 2026-11-12; no
+  Switch match with it is on record. The notes say so and list what was not run (the stand-in modes, a replay A/B, a
+  measured Switch match).
+- **Rebuild:** a clean `git archive` of `71dcb0f`, built twice in fresh target dirs with `tools/build.ps1`'s environment
+  (default `~/.cargo` and `~/.rustup`), gives the same NRO and the same ELF both times. It equals the card's NRO, read in
+  place on 2026-11-14 without the page cache and with no write.
+- **Gates on that export:** `cargo test` 37 passed, clippy `-D warnings` clean, `--no-default-features` ok, release
+  `749ed165`, diag `89980fba`. The first diag attempt ended with exit 143 (the user manager stopped its scope; the cause
+  was not traced) and the repeat passed.
+- **Compliance:** `smash-training-lobby/artifacts/phase23/double-input/COMPLIANCE-stall-press-carry-0.2.0-release.md`.
+  0 mandatory machine rows failed. Two rows are not `pass`: local commands under the guard (`partial`: cargo ran under
+  it, the short git and API commands did not) and the model/effort gate (`not verified`).
+- **Evidence and scripts:** `/home/intpa/spc-release-20261114/` (gate logs, NROs, assets, `gate.ps1`, `make_assets.py`,
+  `publish.ps1`, `verify.ps1`, `CLEANUP-MANIFEST.md`; the build targets are deleted).
+- **Next:** nothing is open for 0.2.0. A code change needs a new version and its own tag. The release's NRO is the
+  card's file and stays as it is.
+
+## 0.2.0 (2026-11-12 to 11-13)
 
 - **Order:** the primary, 17:01Z, relaying the operator: counters, a stats export for the desync detector's
   end-of-session summary, and a flick carry. No tag. The primary installs it on the card.
@@ -30,7 +64,8 @@
 - **Card (the primary, 2026-11-12 ~20:30Z):** `1bbc2d7b…` installed over `2b6ff493…`, `installed_verified`;
   rollback `ultimate/ssbu-stall-press-carry/backups/pre-1bbc2d7bc15ebfd1.nro`; receipts
   `smash-training-lobby/artifacts/card-install-stall-press-carry-0.2.0/`.
-- **Pushed:** `main` to Forgejo, no tag (tags and releases wait until the operator has played).
+- **Pushed:** `main` to Forgejo, no tag (tags and releases wait until the operator has played). Tagged `v0.2.0` on
+  2026-11-14 on the operator's order (see "Release v0.2.0").
 - **The C-stick bit** (the operator's order via the primary 20:40Z to add the `0x80` bit to 0.2.0): `0x80` rides
   along with a carried left-stick flick from a C-stick sample. Release `749ed165…`, diag `89980fba…`, 37 host tests.
   - Eden r6 (`proof-dc8ee988-r6`): m2 PASS but only 9 of 216 inputs ran; the `0x80` branch had no chance to act.
@@ -105,5 +140,5 @@ M items: all apply. C items:
 - **Replay A/B:** not run. The change is to inputs, which the replay records.
 - **Release and card:**
   - push `main`: ordered;
-  - tag and release: after the operator confirms the card install;
+  - tag and release: ordered 2026-11-14 and done (see "Release v0.2.0");
   - card install: the primary runs it.
