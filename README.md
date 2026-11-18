@@ -28,7 +28,8 @@ drops the press. Left half: without the plugin. Right half: version 0.2.0 (diag 
 speed after the press.*
 
 - **Install:** copy `libssbu_stall_press_carry.nro` to
-  `atmosphere/contents/01006A800016E000/romfs/skyline/plugins/` (Smash 13.0.5).
+  `atmosphere/contents/01006A800016E000/romfs/skyline/plugins/`.
+- Tested on: Super Smash Bros. Ultimate 13.0.5 · Switch firmware 23.5.0 · Atmosphère 1.12.2
 - **Where it works:** online and local wireless matches, not offline.
 - **Counts:** with the desync detector 0.5 or later installed, each match's summary line in
   `sd:/ultimate/ssbu-desync-detector/events.log` says how many presses and flicks this plugin carried.
